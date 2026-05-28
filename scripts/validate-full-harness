@@ -162,8 +162,13 @@ def scan_domain_terms(root: Path) -> list[str]:
 
 def validate_dashboard(root: Path) -> list[str]:
     html = (root / "dashboard" / "flyhigh.html").read_text(encoding="utf-8") if (root / "dashboard" / "flyhigh.html").exists() else ""
-    required = ["운영 브리핑", "Decision Console", "추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로", "Dashboard freshness", "validate-dashboard-freshness", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
-    return [f"dashboard missing phrase: {phrase}" for phrase in required if phrase not in html]
+    required = ["운영 브리핑", "Decision Console", "운영자 결정 없음", "Dashboard freshness", "validate-dashboard-freshness", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
+    errors = [f"dashboard missing phrase: {phrase}" for phrase in required if phrase not in html]
+    if "운영자 결정 없음" not in html:
+        for phrase in ["추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로"]:
+            if phrase not in html:
+                errors.append(f"dashboard missing active decision phrase: {phrase}")
+    return errors
 
 
 def validate_docs(root: Path) -> list[str]:

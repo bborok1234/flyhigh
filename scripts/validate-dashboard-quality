@@ -19,13 +19,7 @@ REQUIRED_PHRASES = [
     "게시 차단",
     "remote 없음",
     "Decision Console",
-    "추천",
-    "선택지",
-    "영향",
-    "승인 범위",
-    "Apply gate",
-    "에이전트에게 전달할 명령",
-    "실행 경로",
+    "운영자 결정 없음",
     "지금 판단할 항목",
     "작업 칸반",
     "GitHub 운영 보드",
@@ -60,9 +54,15 @@ def main() -> int:
         errors.append("dashboard missing overview/action layout")
     if "board-five" not in html:
         errors.append("dashboard missing GitHub board layout")
-    for marker in ["decision-console", "decision-card", "decision-option", "recommendation", "execution-path", "governance-grid", "copy-command", "apply-gate"]:
-        if marker not in html:
-            errors.append(f"dashboard missing decision console marker: {marker}")
+    if "운영자 결정 없음" not in html:
+        for phrase in ["추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로"]:
+            if phrase not in html:
+                errors.append(f"dashboard missing active decision phrase: {phrase}")
+        for marker in ["decision-card", "decision-option", "recommendation", "execution-path", "governance-grid", "copy-command", "apply-gate"]:
+            if marker not in html:
+                errors.append(f"dashboard missing decision console marker: {marker}")
+    if "decision-console" not in html:
+        errors.append("dashboard missing decision console marker: decision-console")
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1

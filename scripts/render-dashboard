@@ -208,12 +208,13 @@ def briefing(full: dict[str, Any], issues: list[dict[str, Any]], ops: list[dict[
 
 
 def decision_console(decisions: list[dict[str, Any]]) -> str:
-    open_rows = [row for row in decisions if row.get("status") in {"open", "answered", "applied"}]
+    open_rows = [row for row in decisions if row.get("status") in {"open", "answered"}]
     if not open_rows:
+        applied_count = sum(1 for row in decisions if row.get("status") == "applied")
         return (
             "<section class='decision-console'>"
             "<div class='section-head'><div><span class='surface-label'>Decision Console</span><h2>운영자 결정 없음</h2></div>"
-            "<p class='section-note'>현재 승인하거나 방향을 정해야 할 항목이 없습니다.</p></div>"
+            f"<p class='section-note'>현재 승인하거나 방향을 정해야 할 항목이 없습니다. 적용 완료된 결정 {applied_count}건은 결정 메모리와 반복 로그에서만 추적합니다.</p></div>"
             "</section>"
         )
     cards = []
@@ -510,13 +511,13 @@ def render(root: Path, freshness: dict[str, Any]) -> str:
     body = "".join([
         briefing(full, issues, github_ops, iterations, operator_decisions, generated_at, freshness),
         "<main>",
+        card("Dashboard freshness", freshness_panel(freshness), "SSOT 변경 후 렌더가 누락되면 validate-dashboard-freshness가 실패합니다."),
         decision_console(operator_decisions),
         "<section class='overview-grid'>",
         card("작업 상태", issue_summary(issues), "지금 진행 중인 작업과 검증 대기량"),
         card("GitHub 운영", github_summary(github_ops, github_sync, github_repositories), "승인, 아웃박스, dry-run, repo readiness"),
         card("검증 상태", validation_summary(root), "완료 주장에 필요한 최신 증거"),
         "</section>",
-        card("Dashboard freshness", freshness_panel(freshness), "SSOT 변경 후 렌더가 누락되면 validate-dashboard-freshness가 실패합니다."),
         card("GitHub repository mapping", github_repository_panel(github_repositories), "원격 게시 전 repo, auth, remote, readiness를 확인"),
         "<section class='split'>",
         card("Direction review", direction_review_panel(direction_reviews), "계획 변경, 이슈 분할/보류/생성, PR 진행 판단"),
@@ -583,7 +584,7 @@ main {{ max-width:1440px; margin:0 auto; padding:22px 28px 52px; }}
 .surface-label {{ display:block; margin-bottom:8px; color:var(--accent); font-size:12px; font-weight:760; }}
 .brief-grid {{
   display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
+  grid-template-columns:repeat(7,minmax(0,1fr));
   gap:1px;
   margin:0;
   overflow:hidden;
