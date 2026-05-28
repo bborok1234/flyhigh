@@ -2,6 +2,7 @@
 import argparse
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,10 +42,10 @@ def main() -> int:
     candidate.write_text(text, encoding="utf-8")
     patch["status"] = "applied"
     patch_path.write_text(json.dumps(patch, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
     print(f"applied {args.candidate_id}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

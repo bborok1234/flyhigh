@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+from dashboard_freshness import RENDERER_VERSION, build_metadata, dashboard_path, read_metadata
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    errors: list[str] = []
+    metadata = read_metadata(root)
+    current = build_metadata(root, rendered_at=metadata.get("rendered_at") if metadata else None)
+    html_path = dashboard_path(root)
+    html = html_path.read_text(encoding="utf-8") if html_path.exists() else ""
+
+    if not metadata:
+        errors.append("missing dashboard/flyhigh.freshness.json")
+    if not html:
+        errors.append("missing dashboard/flyhigh.html")
+    if metadata.get("schema_version") != current["schema_version"]:
+        errors.append(f"invalid freshness schema: {metadata.get('schema_version')}")
+    if metadata.get("renderer_version") != RENDERER_VERSION:
+        errors.append(f"renderer version mismatch: {metadata.get('renderer_version')} != {RENDERER_VERSION}")
+    if metadata.get("source_hash") != current["source_hash"]:
+        errors.append("dashboard is stale: current SSOT source hash differs from rendered metadata")
+    if metadata.get("source_count") != current["source_count"]:
+        errors.append("dashboard is stale: tracked source count differs")
+    marker = f"dashboard-freshness source_hash={metadata.get('source_hash', '')}"
+    if marker not in html:
+        errors.append("dashboard HTML does not contain the rendered freshness hash")
+    if RENDERER_VERSION not in html:
+        errors.append("dashboard HTML does not contain the renderer version")
+    if "Dashboard freshness" not in html or "validate-dashboard-freshness" not in html:
+        errors.append("dashboard does not show the freshness panel")
+
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(
+        "dashboard freshness ok "
+        f"({metadata.get('source_count')} sources, hash {metadata.get('source_hash', '')[:12]}, "
+        f"rendered_at {metadata.get('rendered_at')})"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

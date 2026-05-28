@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -49,10 +50,10 @@ def main() -> int:
     append_jsonl(root / "state" / "skillopt" / "promotions.jsonl", promotion)
     patch["status"] = "promoted"
     (candidate_dir / "patch.json").write_text(json.dumps(patch, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
     print(f"promoted {args.candidate_id}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

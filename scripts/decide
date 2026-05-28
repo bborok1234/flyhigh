@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -103,6 +104,7 @@ def main() -> int:
 
     write_rows(responses_path, responses)
     write_rows(decisions_path, decisions)
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
     print(f"recorded {response_id}: {args.decision_id} -> {option.get('id')} ({args.approval_scope})")
     if args.approval_scope in {"publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}:
         print("external or high-impact scope recorded; apply step will not perform remote side effects by itself", file=sys.stderr)

@@ -52,10 +52,14 @@ def main() -> int:
         "completed",
     ], cwd=root, check=False)
     subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
+    freshness = subprocess.run(["scripts/validate-dashboard-freshness"], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    print("$ scripts/validate-dashboard-freshness")
+    print(freshness.stdout)
+    if freshness.returncode != 0:
+        return freshness.returncode
     print("harness-loop ok")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

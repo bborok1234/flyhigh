@@ -70,6 +70,7 @@ scripts/generate-claude-surface
 scripts/generate-opencode-surface
 scripts/install-into-project /path/to/project
 scripts/render-dashboard
+scripts/validate-dashboard-freshness
 scripts/validate-dashboard-quality
 scripts/validate-full-harness
 scripts/create-issue --id FH-100 --title "..." --why "..."
@@ -113,13 +114,17 @@ Render the single-file dashboard with:
 
 ```bash
 scripts/render-dashboard
+scripts/validate-dashboard-freshness
 ```
 
 Then open:
 
 ```text
 dashboard/flyhigh.html
+dashboard/flyhigh.freshness.json
 ```
+
+`scripts/render-dashboard` writes freshness metadata with the tracked SSOT source hash, latest source mtime, renderer version, and render timestamp. `scripts/validate-dashboard-freshness` fails when dashboard HTML or metadata no longer matches the current SSOT. `scripts/validate-full-harness` includes this gate, and `scripts/harness-loop` rerenders after its final state update.
 
 ## Repository Layout
 
@@ -147,6 +152,7 @@ examples/           Usage examples
 - `docs/skillopt-engine.md`: SkillOpt-inspired state machine and promotion flow.
 - `docs/dashboard.md`: Korean dashboard source and rendering model.
 - `docs/dashboard-design-system.md`: operator dashboard design system and content rules.
+- `docs/dashboard-refresh.md`: dashboard freshness metadata and validation contract.
 - `docs/decision-memory.md`: durable decision tracking.
 - `docs/policy-system.md`: policy classes and commands.
 - `docs/eval-program.md`: eval suite commands and reports.
@@ -183,6 +189,7 @@ scripts/validate-run-fixture
 scripts/validate-policy-fixture
 scripts/validate-adapters
 scripts/run-evals
+scripts/validate-dashboard-freshness
 scripts/validate-v1
 scripts/validate-full-harness
 ```

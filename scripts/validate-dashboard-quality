@@ -9,6 +9,8 @@ REQUIRED_PHRASES = [
     "검증 관심",
     "GitHub 준비",
     "GitHub repository mapping",
+    "Dashboard freshness",
+    "validate-dashboard-freshness",
     "Direction review",
     "Merge gates",
     "이슈 액션",

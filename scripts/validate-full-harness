@@ -28,13 +28,13 @@ CHECKS = [
     ("direction reviews", ["scripts/validate-direction-reviews"]),
     ("merge gates", ["scripts/validate-merge-gates"]),
     ("dashboard quality", ["scripts/validate-dashboard-quality"]),
+    ("dashboard freshness", ["scripts/validate-dashboard-freshness"]),
     ("skillopt fixture", ["scripts/validate-skillopt-fixture"]),
     ("skillopt", ["scripts/validate-skillopt"]),
     ("policy", ["scripts/validate-policy"]),
     ("surfaces", ["scripts/validate-surfaces"]),
     ("eval suites", ["scripts/validate-evals"]),
     ("installation", ["scripts/validate-installation"]),
-    ("dashboard", ["scripts/render-dashboard"]),
 ]
 
 REQUIRED_FILES = [
@@ -83,6 +83,7 @@ REQUIRED_FILES = [
     "state/full-status.json",
     "dashboard/flyhigh.html",
     "scripts/render-dashboard",
+    "scripts/validate-dashboard-freshness",
     "scripts/validate-dashboard-quality",
     "skills/active",
     "skills/staging",
@@ -127,6 +128,7 @@ REQUIRED_FILES = [
     "docs/merge-governance-research.md",
     "docs/decision-console.md",
     "docs/dashboard-design-system.md",
+    "docs/dashboard-refresh.md",
 ]
 
 
@@ -160,14 +162,14 @@ def scan_domain_terms(root: Path) -> list[str]:
 
 def validate_dashboard(root: Path) -> list[str]:
     html = (root / "dashboard" / "flyhigh.html").read_text(encoding="utf-8") if (root / "dashboard" / "flyhigh.html").exists() else ""
-    required = ["운영 브리핑", "Decision Console", "추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
+    required = ["운영 브리핑", "Decision Console", "추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로", "Dashboard freshness", "validate-dashboard-freshness", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
     return [f"dashboard missing phrase: {phrase}" for phrase in required if phrase not in html]
 
 
 def validate_docs(root: Path) -> list[str]:
     errors = []
     readme = (root / "README.md").read_text(encoding="utf-8")
-    for phrase in ["scripts/validate-full-harness", "scripts/render-dashboard", "scripts/record-decision", "scripts/promote-skill", "scripts/install-into-project", "scripts/validate-github-ops", "scripts/validate-github-repositories", "scripts/validate-operator-decisions", "scripts/validate-hitl-governance", "scripts/validate-direction-reviews", "scripts/validate-merge-gates", "scripts/validate-dashboard-quality"]:
+    for phrase in ["scripts/validate-full-harness", "scripts/render-dashboard", "scripts/validate-dashboard-freshness", "scripts/record-decision", "scripts/promote-skill", "scripts/install-into-project", "scripts/validate-github-ops", "scripts/validate-github-repositories", "scripts/validate-operator-decisions", "scripts/validate-hitl-governance", "scripts/validate-direction-reviews", "scripts/validate-merge-gates", "scripts/validate-dashboard-quality"]:
         if phrase not in readme:
             errors.append(f"README missing {phrase}")
     return errors
@@ -212,6 +214,16 @@ def main() -> int:
     if failures:
         print(f"validate-full-harness failed: {', '.join(sorted(set(failures)))}", file=sys.stderr)
         return 1
+    render_result = run(root, ["scripts/render-dashboard"])
+    print(f"dashboard render: {'pass' if render_result['returncode'] == 0 else 'fail'}")
+    if render_result["returncode"] != 0:
+        print(render_result["output"], file=sys.stderr)
+        return render_result["returncode"]
+    freshness_result = run(root, ["scripts/validate-dashboard-freshness"])
+    print(f"dashboard freshness final: {'pass' if freshness_result['returncode'] == 0 else 'fail'}")
+    if freshness_result["returncode"] != 0:
+        print(freshness_result["output"], file=sys.stderr)
+        return freshness_result["returncode"]
     print("validate-full-harness ok")
     return 0
 

@@ -180,6 +180,7 @@
     "surfaces": "scripts/validate-surfaces",
     "evals": "scripts/validate-evals",
     "dashboard_state": "scripts/validate-dashboard-state",
+    "dashboard_freshness": "scripts/validate-dashboard-freshness",
     "github_repositories": "scripts/validate-github-repositories",
     "github_operations": "scripts/validate-github-ops",
     "operator_decisions": "scripts/validate-operator-decisions",

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-28T05:44:57.101951+00:00",
+  "timestamp": "2026-05-28T06:15:39.761415+00:00",
   "suite": "all",
   "results": [
     {
@@ -60,7 +60,7 @@
       "evidence": [
         "scripts/render-dashboard"
       ],
-      "output": "wrote dashboard/flyhigh.html"
+      "output": "wrote dashboard/flyhigh.html\nwrote dashboard/flyhigh.freshness.json"
     },
     {
       "suite": "skillopt",

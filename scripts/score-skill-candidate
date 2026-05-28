@@ -30,10 +30,10 @@ def main() -> int:
         "validation_output": validation.stdout.strip()
     }
     (candidate_dir / "score.json").write_text(json.dumps(score, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
     print(f"score {score['candidate_score']} delta {score['delta']} passed={score['passed']}")
     return 0 if score["passed"] else 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

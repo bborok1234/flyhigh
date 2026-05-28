@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -62,6 +63,7 @@ def main() -> int:
     rows = [row for row in load_rows(path) if row.get("id") != args.id]
     rows.append(entry)
     write_rows(path, rows)
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
     print(f"upserted {args.id}")
     return 0
 

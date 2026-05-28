@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import subprocess
 from pathlib import Path
 
 
@@ -68,6 +69,7 @@ def main() -> int:
             row["next_action"] = "사용자 승인 상태와 dry-run 결과 확인 후 publish 명령을 실행한다."
         prepared.append(row.get("id"))
     write_rows(path, rows)
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
     print(f"prepared {len(prepared)} operations: {', '.join(prepared)}")
     return 0
 

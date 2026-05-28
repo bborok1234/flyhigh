@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from dashboard_freshness import RENDERER_VERSION, build_metadata, write_metadata
+
 
 ISSUE_LANES = ["todo", "doing", "review", "done"]
 ISSUE_LABELS = {"todo": "대기", "doing": "진행", "review": "검증", "done": "완료"}
@@ -153,7 +155,27 @@ def validation_summary(root: Path) -> str:
     ]) + "</div>"
 
 
-def briefing(full: dict[str, Any], issues: list[dict[str, Any]], ops: list[dict[str, Any]], iterations: list[dict[str, Any]], operator_decisions: list[dict[str, Any]], generated_at: str) -> str:
+def freshness_panel(freshness: dict[str, Any]) -> str:
+    source_hash = freshness.get("source_hash", "")
+    short_hash = source_hash[:12] if source_hash else "missing"
+    status = "최신" if freshness.get("fresh") else "stale"
+    tone = "ok" if freshness.get("fresh") else "warn"
+    body = "<div class='metrics'>" + "".join([
+        metric("Dashboard", status, "SSOT hash 일치", tone),
+        metric("Rendered", freshness.get("rendered_at", "미확인"), "UTC timestamp", "neutral"),
+        metric("Sources", freshness.get("source_count", 0), "tracked files", "neutral"),
+        metric("Hash", short_hash, freshness.get("latest_source_mtime", ""), "neutral"),
+    ]) + "</div>"
+    body += (
+        "<p class='section-note freshness-note'>"
+        f"renderer={esc(freshness.get('renderer_version', RENDERER_VERSION))} · "
+        f"source_hash={esc(source_hash)}"
+        "</p>"
+    )
+    return body
+
+
+def briefing(full: dict[str, Any], issues: list[dict[str, Any]], ops: list[dict[str, Any]], iterations: list[dict[str, Any]], operator_decisions: list[dict[str, Any]], generated_at: str, freshness: dict[str, Any]) -> str:
     doing = [issue for issue in issues if issue.get("lane") == "doing"]
     review = [issue for issue in issues if issue.get("lane") == "review"]
     prepared = [row for row in ops if row.get("lane") == "prepared"]
@@ -163,6 +185,8 @@ def briefing(full: dict[str, Any], issues: list[dict[str, Any]], ops: list[dict[
     github = f"{len(prepared)}건 dry-run 준비" if prepared else "승인 대기 없음"
     open_decisions = sum(1 for row in operator_decisions if row.get("status") == "open")
     last = short_iteration(last_iteration[0] if last_iteration else None)
+    freshness_label = "최신" if freshness.get("fresh") else "stale"
+    freshness_detail = f"{freshness_label} · {freshness.get('source_count', 0)} sources"
     return (
         "<section class='briefing'>"
         "<div>"
@@ -176,6 +200,7 @@ def briefing(full: dict[str, Any], issues: list[dict[str, Any]], ops: list[dict[
         f"<div><dt>GitHub 준비</dt><dd>{esc(github)}</dd></div>"
         f"<div><dt>결정 필요</dt><dd>{open_decisions}건</dd></div>"
         f"<div><dt>최근 반복</dt><dd>{esc(last)}</dd></div>"
+        f"<div><dt>Freshness</dt><dd>{esc(freshness_detail)}</dd></div>"
         f"<div><dt>생성</dt><dd>{esc(generated_at)}</dd></div>"
         "</dl>"
         "</section>"
@@ -466,7 +491,7 @@ def system_panel(root: Path, policy: dict[str, Any]) -> str:
     ) + "</tbody></table>"
 
 
-def render(root: Path) -> str:
+def render(root: Path, freshness: dict[str, Any]) -> str:
     spec = load_json(root / "spec" / "harness-spec.json", {})
     full = load_json(root / "state" / "full-status.json", {})
     decisions = load_jsonl(root / "state" / "decisions.jsonl")
@@ -483,7 +508,7 @@ def render(root: Path) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     body = "".join([
-        briefing(full, issues, github_ops, iterations, operator_decisions, generated_at),
+        briefing(full, issues, github_ops, iterations, operator_decisions, generated_at, freshness),
         "<main>",
         decision_console(operator_decisions),
         "<section class='overview-grid'>",
@@ -491,6 +516,7 @@ def render(root: Path) -> str:
         card("GitHub 운영", github_summary(github_ops, github_sync, github_repositories), "승인, 아웃박스, dry-run, repo readiness"),
         card("검증 상태", validation_summary(root), "완료 주장에 필요한 최신 증거"),
         "</section>",
+        card("Dashboard freshness", freshness_panel(freshness), "SSOT 변경 후 렌더가 누락되면 validate-dashboard-freshness가 실패합니다."),
         card("GitHub repository mapping", github_repository_panel(github_repositories), "원격 게시 전 repo, auth, remote, readiness를 확인"),
         "<section class='split'>",
         card("Direction review", direction_review_panel(direction_reviews), "계획 변경, 이슈 분할/보류/생성, PR 진행 판단"),
@@ -671,6 +697,7 @@ td span {{ display:block; color:var(--muted); font-size:12px; margin-top:3px; }}
 </head>
 <body>
 <!-- {esc(purpose)} -->
+<!-- dashboard-freshness source_hash={esc(freshness.get('source_hash', ''))} renderer_version={esc(freshness.get('renderer_version', RENDERER_VERSION))} rendered_at={esc(freshness.get('rendered_at', ''))} -->
 {body}
 </body>
 </html>
@@ -681,8 +708,11 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     out = root / "dashboard" / "flyhigh.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render(root), encoding="utf-8")
+    freshness = build_metadata(root)
+    out.write_text(render(root, freshness), encoding="utf-8")
+    write_metadata(root, freshness)
     print(f"wrote {rel_path(root, out)}")
+    print(f"wrote {rel_path(root, root / freshness['metadata_path'])}")
     return 0
 
 

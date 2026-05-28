@@ -24,12 +24,16 @@ The dashboard is generated from structured state:
 
 ```bash
 scripts/render-dashboard
+scripts/validate-dashboard-freshness
 ```
 
 Output:
 
 ```text
 dashboard/flyhigh.html
+dashboard/flyhigh.freshness.json
 ```
 
 The dashboard is Korean-first and answers: why the work exists, what the operator must decide now, which recommendation is favored, what each option changes, which issues are in todo/doing/review/done, what decisions were made, how far the work is, what passed validation, which skills are evolving, and what happens after a decision.
+
+`dashboard/flyhigh.freshness.json` records the SSOT source hash, latest source mtime, renderer version, and render timestamp. If a tracked source changes without a render, `scripts/validate-dashboard-freshness` fails. See `docs/dashboard-refresh.md` for the refresh contract.

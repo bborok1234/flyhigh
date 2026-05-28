@@ -58,6 +58,7 @@ def main() -> int:
         gate["merged_at"] = timestamp
         gate["merged_url"] = display_url(gate.get("repo_id", ""), gate.get("pr_url", ""))
         write_jsonl(gate_path, gates)
+        subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
         print(f"merged {args.gate_id}: {gate.get('pr_url')}")
         return 0
     raise SystemExit(f"merge gate not found: {args.gate_id}")

@@ -118,6 +118,7 @@ def main() -> int:
                 "result": "dry-run only; no remote GitHub write performed.",
                 "evidence": [row.get("outbox_path", ""), "scripts/publish-github-operation"],
             })
+            subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
             print(f"dry-run: {dry_run}")
             return 0
         if os.environ.get("FLYHIGH_GITHUB_EXECUTE") != "1":
@@ -138,6 +139,7 @@ def main() -> int:
         row["published_at"] = datetime.now(timezone.utc).isoformat()
         row["next_action"] = "remote GitHub item 상태를 추적한다."
         write_rows(path, rows)
+        subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
         return 0
     raise SystemExit(f"operation not found: {args.id}")
 
