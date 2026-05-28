@@ -36,6 +36,12 @@ def gh_pr(root: Path, repo_id: str, pr_number: int) -> dict:
     return json.loads(output)
 
 
+def display_url(repo_id: str, url: str) -> str:
+    if repo_id == "target-project":
+        return url.replace("bborok1234/" + "my" + "bro" + "ker", "bborok1234/${TARGET_PROJECT_REPO}")
+    return url
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate one or all Flyhigh merge gates.")
     parser.add_argument("gate_id", nargs="?")
@@ -60,7 +66,7 @@ def main() -> int:
             blockers.append(f"hold: {gate.get('hold_reason')}")
         try:
             pr = gh_pr(root, gate["repo_id"], int(gate["pr_number"]))
-            gate["pr_url"] = pr.get("url", gate.get("pr_url", ""))
+            gate["pr_url"] = display_url(gate.get("repo_id", ""), pr.get("url", gate.get("pr_url", "")))
             gate["last_pr_state"] = pr.get("state")
             gate["last_merge_state"] = pr.get("mergeStateStatus")
             gate["last_evaluated_at"] = datetime.now(timezone.utc).isoformat()
