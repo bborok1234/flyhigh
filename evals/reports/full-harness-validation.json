@@ -1,0 +1,107 @@
+{
+  "failures": [],
+  "results": [
+    {
+      "name": "spec",
+      "command": "scripts/validate-spec",
+      "returncode": 0,
+      "output": "spec ok"
+    },
+    {
+      "name": "plugin",
+      "command": "scripts/validate-plugin",
+      "returncode": 0,
+      "output": "plugin manifest ok"
+    },
+    {
+      "name": "active skills",
+      "command": "scripts/validate-skills",
+      "returncode": 0,
+      "output": "skills ok (9 checked)"
+    },
+    {
+      "name": "decisions",
+      "command": "scripts/validate-decisions",
+      "returncode": 0,
+      "output": "decisions ok (4 recorded)"
+    },
+    {
+      "name": "dashboard state",
+      "command": "scripts/validate-dashboard-state",
+      "returncode": 0,
+      "output": "dashboard state ok (13 issues, 10 iterations, 2 github operations, 3 operator decisions)"
+    },
+    {
+      "name": "github repositories",
+      "command": "scripts/validate-github-repositories",
+      "returncode": 0,
+      "output": "github repositories ok (2 repositories, auth=yes)"
+    },
+    {
+      "name": "github ops",
+      "command": "scripts/validate-github-ops",
+      "returncode": 0,
+      "output": "github ops ok (2 operations, 3 sync records)"
+    },
+    {
+      "name": "operator decisions",
+      "command": "scripts/validate-operator-decisions",
+      "returncode": 0,
+      "output": "operator decisions ok (3 decisions, 3 open)"
+    },
+    {
+      "name": "hitl governance",
+      "command": "scripts/validate-hitl-governance",
+      "returncode": 0,
+      "output": "hitl governance ok (3 decisions, 0 responses)"
+    },
+    {
+      "name": "dashboard quality",
+      "command": "scripts/validate-dashboard-quality",
+      "returncode": 0,
+      "output": "dashboard quality ok"
+    },
+    {
+      "name": "skillopt fixture",
+      "command": "scripts/validate-skillopt-fixture",
+      "returncode": 0,
+      "output": "skillopt ok (9 active skills, 1 staged candidates)"
+    },
+    {
+      "name": "skillopt",
+      "command": "scripts/validate-skillopt",
+      "returncode": 0,
+      "output": "skillopt ok (9 active skills, 1 staged candidates)"
+    },
+    {
+      "name": "policy",
+      "command": "scripts/validate-policy",
+      "returncode": 0,
+      "output": "policy ok"
+    },
+    {
+      "name": "surfaces",
+      "command": "scripts/validate-surfaces",
+      "returncode": 0,
+      "output": "codex surface generated\nadapters generated\nsurfaces ok"
+    },
+    {
+      "name": "eval suites",
+      "command": "scripts/validate-evals",
+      "returncode": 0,
+      "output": "eval-suite all: pass\nevals/reports/all.json\n\nevals ok"
+    },
+    {
+      "name": "installation",
+      "command": "scripts/validate-installation",
+      "returncode": 0,
+      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
+    },
+    {
+      "name": "dashboard",
+      "command": "scripts/render-dashboard",
+      "returncode": 0,
+      "output": "wrote dashboard/flyhigh.html"
+    }
+  ]
+}

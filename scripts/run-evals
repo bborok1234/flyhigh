@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+CHECKS = [
+    ("plugin", ["scripts/validate-plugin"]),
+    ("skills", ["scripts/validate-skills"]),
+    ("bootstrap", ["scripts/validate-bootstrap-fixture"]),
+    ("run-artifact", ["scripts/validate-run-fixture"]),
+    ("policy", ["scripts/validate-policy-fixture"]),
+    ("adapters", ["scripts/generate-adapters"], ["scripts/validate-adapters"]),
+]
+
+
+def run(root: Path, command: list[str]) -> dict[str, object]:
+    result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    return {
+        "command": " ".join(command),
+        "returncode": result.returncode,
+        "stdout": result.stdout.strip(),
+        "stderr": result.stderr.strip(),
+    }
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    report = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "checks": [],
+        "status": "passed",
+    }
+    for item in CHECKS:
+        name = item[0]
+        commands = list(item[1:])
+        results = [run(root, command) for command in commands]
+        passed = all(result["returncode"] == 0 for result in results)
+        if not passed:
+            report["status"] = "failed"
+        report["checks"].append({"name": name, "passed": passed, "results": results})
+
+    output = root / "evals" / "reports" / "latest.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+
+    print(f"evals {report['status']}: {output}")
+    for check in report["checks"]:
+        print(f"- {check['name']}: {'pass' if check['passed'] else 'fail'}")
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

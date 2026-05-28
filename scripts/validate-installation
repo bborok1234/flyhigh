@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "target-domain-app"
+        target.mkdir()
+        (target / "package.json").write_text('{"scripts":{"test":"node --test"}}\n', encoding="utf-8")
+        install = subprocess.run(["scripts/install-into-project", str(target)], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+        print(install.stdout)
+        if install.returncode != 0:
+            return install.returncode
+        audit = subprocess.run(["scripts/audit-project", str(target)], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+        print(audit.stdout)
+        return audit.returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

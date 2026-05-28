@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import re
+import subprocess
+from pathlib import Path
+from typing import Any
+
+
+DESTRUCTIVE_PATTERNS = [
+    r"\brm\s+-rf\b",
+    r"\bgit\s+reset\s+--hard\b",
+    r"\bgit\s+checkout\s+--\b",
+    r"\bsudo\b",
+    r"\bchmod\s+-R\b",
+]
+
+DEPENDENCY_FILES = {
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lockb",
+    "pyproject.toml",
+    "requirements.txt",
+    "poetry.lock",
+    "Cargo.toml",
+    "Cargo.lock",
+    "go.mod",
+    "go.sum",
+}
+
+SECRET_PATTERNS = [
+    ".env",
+    ".env.local",
+    ".npmrc",
+    ".pypirc",
+    "id_rsa",
+    "id_ed25519",
+    "secrets.json",
+]
+
+
+def read_lines(path: Path | None) -> list[str]:
+    if not path or not path.exists():
+        return []
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def git_changed_files(root: Path) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "status", "--short"],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError:
+        return []
+    files: list[str] = []
+    for line in result.stdout.splitlines():
+        if line.strip():
+            files.append(line[3:].strip())
+    return files
+
+
+def warn(kind: str, title: str, evidence: str, severity: str = "warning") -> dict[str, Any]:
+    return {"kind": kind, "title": title, "evidence": evidence, "severity": severity}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Warn about common high-risk agent actions.")
+    parser.add_argument("--root", default=".", help="Repository root.")
+    parser.add_argument("--commands-file", default="", help="Optional file containing planned shell commands.")
+    parser.add_argument("--changed-files-file", default="", help="Optional file containing changed file paths.")
+    parser.add_argument("--json", action="store_true", help="Emit JSON.")
+    args = parser.parse_args()
+
+    root = Path(args.root).resolve()
+    commands = read_lines(Path(args.commands_file) if args.commands_file else None)
+    changed_files = read_lines(Path(args.changed_files_file) if args.changed_files_file else None) or git_changed_files(root)
+    warnings: list[dict[str, Any]] = []
+
+    for command in commands:
+        for pattern in DESTRUCTIVE_PATTERNS:
+            if re.search(pattern, command):
+                warnings.append(warn("destructive-command", "Potentially destructive command", command, "high"))
+
+    for path in changed_files:
+        name = Path(path).name
+        if name in DEPENDENCY_FILES:
+            warnings.append(warn("dependency-change", "Dependency or lock file changed", path))
+        if name in SECRET_PATTERNS or "/.ssh/" in path:
+            warnings.append(warn("secret-file", "Likely secret or credential file touched", path, "high"))
+
+    if len(changed_files) >= 25:
+        warnings.append(warn("broad-churn", "Broad changed-file set detected", f"{len(changed_files)} files"))
+
+    agents = root / "AGENTS.md"
+    generated = root / "AGENTS.flyhigh.generated.md"
+    if agents.exists() and generated.exists():
+        warnings.append(warn("instruction-drift", "Generated instructions need manual merge", str(generated)))
+    if agents.exists() and "{{" in agents.read_text(encoding="utf-8", errors="ignore"):
+        warnings.append(warn("instruction-drift", "Project instructions contain unresolved placeholders", str(agents)))
+
+    result = {"root": str(root), "warning_count": len(warnings), "warnings": warnings}
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"policy warnings: {len(warnings)}")
+        for item in warnings:
+            print(f"- [{item['severity']}] {item['kind']}: {item['title']} ({item['evidence']})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

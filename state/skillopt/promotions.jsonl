@@ -1,0 +1,2 @@
+{"id":"promotion-sample-001","timestamp":"2026-05-27","skill":"flyhigh-session-handoff","candidate":"sample-handoff-evidence-note","before_hash":"sample-before","after_hash":"sample-after","score_before":0.8,"score_after":0.9,"evidence":["evals/suites/skillopt/basic/rubric.md"],"status":"recorded-sample"}
+

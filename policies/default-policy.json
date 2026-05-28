@@ -1,0 +1,38 @@
+{
+  "name": "flyhigh-default-policy",
+  "version": "1.0.0",
+  "classes": ["allow", "rationale_required", "approval_required", "deny"],
+  "rules": [
+    {
+      "id": "allow-local-read",
+      "class": "allow",
+      "match": { "kind": "command", "patterns": ["rg", "find", "sed", "ls", "git status"] },
+      "reason": "Read-only local inspection is safe and expected."
+    },
+    {
+      "id": "dependency-change",
+      "class": "rationale_required",
+      "match": { "kind": "file", "patterns": ["package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "go.mod"] },
+      "reason": "Dependency changes affect future maintenance and require rationale."
+    },
+    {
+      "id": "destructive-command",
+      "class": "approval_required",
+      "match": { "kind": "command", "patterns": ["rm -rf", "git reset --hard", "git checkout --", "sudo"] },
+      "reason": "Destructive or privileged commands can cause data loss or external side effects."
+    },
+    {
+      "id": "secret-file",
+      "class": "approval_required",
+      "match": { "kind": "file", "patterns": [".env", ".npmrc", ".pypirc", "id_rsa", "id_ed25519", "secrets.json"] },
+      "reason": "Credential-like files must not be touched casually."
+    },
+    {
+      "id": "domain-leakage",
+      "class": "deny",
+      "match": { "kind": "content", "patterns": ["domain-specific strategy inside Flyhigh core"] },
+      "reason": "Flyhigh core must stay domain-neutral."
+    }
+  ]
+}
+

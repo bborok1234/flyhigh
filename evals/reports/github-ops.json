@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-05-27T07:23:39.379802+00:00",
+  "suite": "github-ops",
+  "results": [
+    {
+      "suite": "github-ops",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-github-ops"
+      ],
+      "output": "github ops ok (2 operations, 1 sync records)"
+    }
+  ],
+  "passed": true
+}

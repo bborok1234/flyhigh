@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+DOMAIN_TERMS = [
+    "fin" + "ance",
+    "invest" + "ment",
+    "trad" + "ing",
+    "bro" + "ker",
+    "port" + "folio",
+    "sto" + "ck",
+    "sig" + "nal",
+]
+
+
+def run(root: Path, command: list[str]) -> tuple[int, str]:
+    result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    return result.returncode, result.stdout.strip()
+
+
+def scan_domain_terms(root: Path) -> list[str]:
+    hits: list[str] = []
+    ignored = {".git"}
+    ignored_prefixes = {"evals/reports"}
+    for path in root.rglob("*"):
+        if any(part in ignored for part in path.parts):
+            continue
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root).as_posix()
+        if any(relative.startswith(prefix) for prefix in ignored_prefixes):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        lowered = text.lower()
+        for term in DOMAIN_TERMS:
+            if term in lowered:
+                hits.append(f"{path.relative_to(root)}:{term}")
+    return hits
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    checks = [
+        ("plugin", ["scripts/validate-plugin"]),
+        ("skills", ["scripts/validate-skills"]),
+        ("bootstrap fixture", ["scripts/validate-bootstrap-fixture"]),
+        ("run artifact fixture", ["scripts/validate-run-fixture"]),
+        ("policy fixture", ["scripts/validate-policy-fixture"]),
+        ("generate adapters", ["scripts/generate-adapters"]),
+        ("adapter validation", ["scripts/validate-adapters"]),
+        ("eval runner", ["scripts/run-evals"]),
+        ("dashboard render", ["scripts/render-v1-dashboard"]),
+    ]
+    failures: list[str] = []
+    results = []
+    for name, command in checks:
+        code, output = run(root, command)
+        results.append({"name": name, "command": " ".join(command), "returncode": code, "output": output})
+        print(f"{name}: {'pass' if code == 0 else 'fail'}")
+        if code != 0:
+            failures.append(name)
+
+    required_files = [
+        "state/v1-status.json",
+        "state/v1-decisions.jsonl",
+        "state/v1-events.jsonl",
+        "state/v1-risks.jsonl",
+        "dashboard/flyhigh-v1.html",
+        "scripts/create-run",
+        "scripts/validate-run",
+        "scripts/policy-preflight",
+        "scripts/run-evals",
+        "scripts/generate-adapters",
+        "scripts/validate-adapters",
+        "adapters/claude/CLAUDE.md",
+        "adapters/opencode/AGENTS.md",
+    ]
+    missing = [name for name in required_files if not (root / name).exists()]
+    if missing:
+        failures.append("required files")
+        for name in missing:
+            print(f"missing {name}", file=sys.stderr)
+
+    domain_hits = scan_domain_terms(root)
+    if domain_hits:
+        failures.append("domain neutrality")
+        for hit in domain_hits:
+            print(f"domain term hit: {hit}", file=sys.stderr)
+    else:
+        print("domain neutrality: pass")
+
+    status = json.loads((root / "state" / "v1-status.json").read_text(encoding="utf-8"))
+    if status.get("status") not in {"in_progress", "complete"}:
+        failures.append("status json")
+        print("invalid v1-status status", file=sys.stderr)
+
+    report = root / "evals" / "reports" / "v1-validation.json"
+    report.write_text(json.dumps({"failures": failures, "results": results}, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {report}")
+    if failures:
+        print(f"validate-v1 failed: {', '.join(failures)}", file=sys.stderr)
+        return 1
+    print("validate-v1 ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

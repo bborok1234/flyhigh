@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+LANES = {"needs_approval", "approved", "prepared", "published", "blocked"}
+
+
+def split(raw: str) -> list[str]:
+    return [item.strip() for item in raw.split("|") if item.strip()]
+
+
+def load_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_rows(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Stage a GitHub issue/PR operation proposal without publishing it.")
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--kind", required=True, choices=["issue", "pr"])
+    parser.add_argument("--target-repo", default="target-project")
+    parser.add_argument("--title", required=True)
+    parser.add_argument("--why", required=True)
+    parser.add_argument("--body", required=True)
+    parser.add_argument("--labels", default="")
+    parser.add_argument("--linked-items", default="")
+    parser.add_argument("--evidence", default="")
+    parser.add_argument("--next-action", default="사용자 승인 후 outbox를 생성한다.")
+    args = parser.parse_args()
+
+    root = Path(__file__).resolve().parents[1]
+    path = root / "state" / "github" / "operations.jsonl"
+    entry = {
+        "id": args.id,
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "kind": args.kind,
+        "target_repo": args.target_repo,
+        "title": args.title,
+        "why": args.why,
+        "body": args.body,
+        "labels": split(args.labels),
+        "linked_items": split(args.linked_items),
+        "status": "needs_approval",
+        "lane": "needs_approval",
+        "approval_required": True,
+        "approved_by": "",
+        "approved_at": "",
+        "outbox_path": "",
+        "remote_url": "",
+        "evidence": split(args.evidence),
+        "next_action": args.next_action,
+    }
+    rows = [row for row in load_rows(path) if row.get("id") != args.id]
+    rows.append(entry)
+    write_rows(path, rows)
+    print(f"upserted {args.id}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

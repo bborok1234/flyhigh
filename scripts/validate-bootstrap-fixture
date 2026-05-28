@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+def require(path: Path, errors: list[str]) -> None:
+    if not path.exists():
+        errors.append(f"missing {path}")
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    fixtures = sorted(path for path in (root / "evals" / "fixtures" / "bootstrap").iterdir() if path.is_dir())
+    if not fixtures:
+        print("missing bootstrap fixtures", file=sys.stderr)
+        return 1
+
+    for fixture in fixtures:
+        input_dir = fixture / "input"
+        expected_terms_path = fixture / "expected" / "AGENTS-terms.txt"
+        expected_terms = [
+            line.strip()
+            for line in expected_terms_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+        if not input_dir.exists():
+            print(f"missing fixture input: {input_dir}", file=sys.stderr)
+            return 1
+
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "repo"
+            shutil.copytree(input_dir, target)
+            result = subprocess.run(
+                [str(root / "scripts" / "bootstrap-project"), str(target)],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            if result.returncode != 0:
+                print(result.stdout)
+                print(result.stderr, file=sys.stderr)
+                return result.returncode
+
+            errors: list[str] = []
+            agents = target / "AGENTS.md"
+            report = target / ".flyhigh" / "bootstrap-report.md"
+            require(agents, errors)
+            require(report, errors)
+            for name in [
+                "project-facts.md",
+                "decisions.md",
+                "commands.md",
+                "hazards.md",
+                "failed-attempts.md",
+                "skill-notes.md",
+            ]:
+                require(target / ".flyhigh" / "memory" / name, errors)
+
+            agents_text = agents.read_text(encoding="utf-8") if agents.exists() else ""
+            for term in expected_terms:
+                if term not in agents_text:
+                    errors.append(f"{fixture.name} AGENTS.md missing expected term: {term}")
+
+            if errors:
+                for error in errors:
+                    print(error, file=sys.stderr)
+                return 1
+
+    print("bootstrap fixture ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

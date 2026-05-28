@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-27","id":"risk-001","title":"큰 v1 scope는 SSOT 없이는 흐려질 수 있음","summary":"하나의 큰 goal은 사람이 따라갈 수 있는 진행상황판이 없으면 맥락과 결정이 흩어진다.","evidence":["state/v1-status.json"],"status":"watch"}
+{"timestamp":"2026-05-27","id":"risk-001-close","title":"SSOT drift risk 완화","summary":"v1은 구조화된 state, generated dashboard, validate-v1 검증을 갖추었다.","evidence":["state/v1-status.json","scripts/render-v1-dashboard","scripts/validate-v1"],"status":"closed"}

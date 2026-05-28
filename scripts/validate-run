@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED_FILES = [
+    "manifest.json",
+    "plan.md",
+    "events.jsonl",
+    "tool-calls.jsonl",
+    "verification.md",
+    "final.md",
+]
+
+REQUIRED_MANIFEST_FIELDS = [
+    "task",
+    "repo",
+    "started_at",
+    "agent_surface",
+    "skills",
+    "constraints",
+    "artifacts",
+    "validation",
+]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate a Flyhigh run artifact folder.")
+    parser.add_argument("run_dir", help="Run artifact directory.")
+    args = parser.parse_args()
+
+    run_dir = Path(args.run_dir)
+    errors: list[str] = []
+    for name in REQUIRED_FILES:
+        if not (run_dir / name).exists():
+            errors.append(f"missing {name}")
+
+    manifest_path = run_dir / "manifest.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"invalid manifest JSON: {exc}")
+            manifest = {}
+        for field in REQUIRED_MANIFEST_FIELDS:
+            if field not in manifest:
+                errors.append(f"manifest missing {field}")
+        artifacts = manifest.get("artifacts", [])
+        for name in REQUIRED_FILES:
+            if name not in artifacts:
+                errors.append(f"manifest artifacts missing {name}")
+
+    if errors:
+        for error in errors:
+            print(error, file=sys.stderr)
+        return 1
+
+    print("run artifact ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

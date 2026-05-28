@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+SCOPES = {
+    "draft_only",
+    "prepare_only",
+    "local_apply",
+    "publish_issue",
+    "open_pr",
+    "merge_pr",
+    "delete_or_reset",
+    "spend_or_call",
+}
+
+
+def load_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_rows(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = "\n".join(json.dumps(row, ensure_ascii=False) for row in rows)
+    path.write_text((text + "\n") if text else "", encoding="utf-8")
+
+
+def resolve_option(decision: dict, token: str, scope: str) -> dict:
+    options = decision.get("options", [])
+    for option in options:
+        if option.get("id") == token:
+            return option
+    if token == "approve":
+        for option in options:
+            if option.get("approval_scope") == scope and option.get("id") == decision.get("recommendation"):
+                return option
+        for option in options:
+            if option.get("approval_scope") == scope:
+                return option
+    labels = ", ".join(option.get("id", "") for option in options)
+    raise SystemExit(f"unknown option/action for {decision.get('id')}: {token}. options: {labels}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Record a scoped operator decision response.")
+    parser.add_argument("decision_id")
+    parser.add_argument("option_or_action", help="Option id, or 'approve' to approve the recommended option for the given scope.")
+    parser.add_argument("approval_scope", choices=sorted(SCOPES))
+    parser.add_argument("--operator", default="operator")
+    parser.add_argument("--note", default="")
+    args = parser.parse_args()
+
+    root = Path(__file__).resolve().parents[1]
+    decisions_path = root / "state" / "operator-decisions.jsonl"
+    responses_path = root / "state" / "operator-responses.jsonl"
+    decisions = load_rows(decisions_path)
+    responses = load_rows(responses_path)
+
+    decision = next((row for row in decisions if row.get("id") == args.decision_id), None)
+    if not decision:
+        raise SystemExit(f"decision not found: {args.decision_id}")
+    if decision.get("status") not in {"open", "answered"}:
+        raise SystemExit(f"{args.decision_id} is not open/answered: {decision.get('status')}")
+
+    option = resolve_option(decision, args.option_or_action, args.approval_scope)
+    option_scope = option.get("approval_scope")
+    if option_scope != args.approval_scope:
+        raise SystemExit(f"scope mismatch: option {option.get('id')} requires {option_scope}, got {args.approval_scope}")
+
+    timestamp = datetime.now(timezone.utc).isoformat()
+    response_id = f"OR-{len(responses) + 1:03d}"
+    response = {
+        "id": response_id,
+        "timestamp": timestamp,
+        "decision_id": args.decision_id,
+        "source_id": decision.get("source_id", ""),
+        "option_id": option.get("id"),
+        "option_label": option.get("label", ""),
+        "approval_scope": args.approval_scope,
+        "operator": args.operator,
+        "note": args.note,
+        "status": "pending",
+        "apply_gate": decision.get("apply_gate", ""),
+        "autonomy_level": decision.get("autonomy_level", ""),
+        "risk_level": decision.get("risk_level", ""),
+        "reversibility": decision.get("reversibility", ""),
+        "source_command": f"{args.decision_id} {args.option_or_action} {args.approval_scope}",
+    }
+    responses = [row for row in responses if row.get("decision_id") != args.decision_id or row.get("status") not in {"pending", "blocked"}]
+    responses.append(response)
+
+    decision["status"] = "answered"
+    decision["answered_by"] = args.operator
+    decision["answered_at"] = timestamp
+    decision["selected_option"] = option.get("id")
+    decision["selected_scope"] = args.approval_scope
+    decision["last_response_id"] = response_id
+
+    write_rows(responses_path, responses)
+    write_rows(decisions_path, decisions)
+    print(f"recorded {response_id}: {args.decision_id} -> {option.get('id')} ({args.approval_scope})")
+    if args.approval_scope in {"publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}:
+        print("external or high-impact scope recorded; apply step will not perform remote side effects by itself", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

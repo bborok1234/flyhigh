@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Create a bounded candidate skill edit patch.")
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--skill", required=True)
+    parser.add_argument("--operation", choices=["add", "delete", "replace"], required=True)
+    parser.add_argument("--target", required=True)
+    parser.add_argument("--replacement", default="")
+    parser.add_argument("--evidence", action="append", default=[])
+    parser.add_argument("--expected-score-delta", type=float, default=0.0)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    out_dir = root / "skills" / "staging" / args.id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    patch = {
+        "id": args.id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "skill": args.skill,
+        "operation": args.operation,
+        "target": args.target,
+        "replacement": args.replacement,
+        "evidence": args.evidence,
+        "expected_score_delta": args.expected_score_delta,
+        "status": "proposed"
+    }
+    (out_dir / "patch.json").write_text(json.dumps(patch, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"proposed {out_dir.relative_to(root)}/patch.json")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

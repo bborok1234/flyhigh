@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+import html
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            rows.append(json.loads(line))
+    return rows
+
+
+def esc(value: Any) -> str:
+    return html.escape(str(value))
+
+
+def status_class(status: str) -> str:
+    normalized = status.lower().replace("_", "-")
+    if normalized in {"done", "complete", "passed", "accepted"}:
+        return "good"
+    if normalized in {"blocked", "failed", "error"}:
+        return "bad"
+    if normalized in {"watch", "warning", "deferred"}:
+        return "warn"
+    return "neutral"
+
+
+def card(title: str, body: str) -> str:
+    return f"<section class='card'><h2>{esc(title)}</h2>{body}</section>"
+
+
+def render_list(items: list[Any]) -> str:
+    if not items:
+        return "<p class='muted'>None</p>"
+    return "<ul>" + "".join(f"<li>{esc(item)}</li>" for item in items) + "</ul>"
+
+
+def render_kv(items: list[tuple[str, Any]]) -> str:
+    return "<dl class='kv'>" + "".join(f"<div><dt>{esc(key)}</dt><dd>{esc(value)}</dd></div>" for key, value in items) + "</dl>"
+
+
+def render_summary(summary: dict[str, Any], outcome: dict[str, Any]) -> str:
+    return (
+        "<div class='summary-grid'>"
+        + "<div class='summary-main'>"
+        + "<h2>작업 요약</h2>"
+        + render_kv(
+            [
+                ("왜 했나", summary.get("why", "")),
+                ("무엇이 바뀌었나", summary.get("what_changed", "")),
+                ("현재 결과", summary.get("current_result", "")),
+                ("어떻게 판단하나", summary.get("how_to_judge", "")),
+            ]
+        )
+        + "</div>"
+        + "<aside class='outcome'>"
+        + "<h2>결과</h2>"
+        + render_kv(
+            [
+                ("결과", outcome.get("result", "")),
+                ("검증", outcome.get("validation", "")),
+                ("다음 판단", outcome.get("recommended_next_move", "")),
+            ]
+        )
+        + "<h3>의도적으로 미룬 것</h3>"
+        + render_list(outcome.get("deferrals", []))
+        + "</aside>"
+        + "</div>"
+    )
+
+
+def render_milestones(milestones: list[dict[str, Any]]) -> str:
+    parts = []
+    for item in milestones:
+        progress = int(item.get("progress", 0))
+        files = render_list(item.get("files", []))
+        parts.append(
+            "<div class='milestone'>"
+            f"<div class='row'><strong>{esc(item.get('title', 'Untitled'))}</strong>"
+            f"<span class='pill {status_class(item.get('status', ''))}'>{esc(item.get('status', 'unknown'))}</span></div>"
+            f"<div class='bar'><span style='width:{progress}%'></span></div>"
+            f"<p class='muted'>{progress}% 완료</p>"
+            + render_kv(
+                [
+                    ("왜", item.get("why", "")),
+                    ("결정", item.get("decision", "")),
+                    ("결과", item.get("result", "")),
+                ]
+            )
+            + f"<details><summary>관련 파일</summary>{files}</details>"
+            "</div>"
+        )
+    return "".join(parts)
+
+
+def render_workstreams(workstreams: list[dict[str, Any]]) -> str:
+    if not workstreams:
+        return "<p class='muted'>None</p>"
+    return "".join(
+        "<div class='item'>"
+        f"<div class='row'><strong>{esc(item.get('title', 'Untitled'))}</strong>"
+        f"<span class='pill {status_class(item.get('status', ''))}'>{esc(item.get('status', 'unknown'))}</span></div>"
+        f"<p>{esc(item.get('summary', ''))}</p>"
+        "</div>"
+        for item in workstreams
+    )
+
+
+def render_records(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p class='muted'>None</p>"
+    parts = []
+    for record in records[-8:][::-1]:
+        evidence = render_list(record.get("evidence", []))
+        parts.append(
+            "<div class='item'>"
+            f"<div class='row'><strong>{esc(record.get('title', 'Untitled'))}</strong>"
+            f"<span class='pill {status_class(record.get('status', ''))}'>{esc(record.get('status', ''))}</span></div>"
+            f"<p class='muted'>{esc(record.get('timestamp', ''))} · {esc(record.get('id', ''))}</p>"
+            f"<p>{esc(record.get('summary', ''))}</p>"
+            f"<details><summary>근거</summary>{evidence}</details>"
+            "</div>"
+        )
+    return "".join(parts)
+
+
+def render_decision_table(decisions: list[dict[str, Any]]) -> str:
+    if not decisions:
+        return "<p class='muted'>None</p>"
+    rows = []
+    for record in decisions:
+        rows.append(
+            "<tr>"
+            f"<td>{esc(record.get('id', ''))}</td>"
+            f"<td><strong>{esc(record.get('title', ''))}</strong><br><span class='muted'>{esc(record.get('summary', ''))}</span></td>"
+            f"<td><span class='pill {status_class(record.get('status', ''))}'>{esc(record.get('status', ''))}</span></td>"
+            f"<td>{render_list(record.get('evidence', []))}</td>"
+            "</tr>"
+        )
+    return "<table><thead><tr><th>ID</th><th>결정과 이유</th><th>상태</th><th>근거</th></tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    state_dir = root / "state"
+    dashboard_dir = root / "dashboard"
+    dashboard_dir.mkdir(parents=True, exist_ok=True)
+
+    status = load_json(state_dir / "v1-status.json")
+    decisions = load_jsonl(state_dir / "v1-decisions.jsonl")
+    events = load_jsonl(state_dir / "v1-events.jsonl")
+    risks = load_jsonl(state_dir / "v1-risks.jsonl")
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    body = "".join(
+        [
+            "<header>",
+            f"<p class='eyebrow'>생성 시각 {generated_at}</p>",
+            f"<h1>{esc(status.get('goal', 'Flyhigh v1'))}</h1>",
+            f"<p><span class='pill {status_class(status.get('status', ''))}'>{esc(status.get('status', 'unknown'))}</span> 업데이트 {esc(status.get('updated_at', ''))}</p>",
+            "</header>",
+            card("요약", render_summary(status.get("executive_summary", {}), status.get("outcome", {}))),
+            card("마일스톤: 왜 / 결정 / 결과", render_milestones(status.get("milestones", []))),
+            card("작업 흐름", render_workstreams(status.get("workstreams", []))),
+            card("검증", render_records(status.get("validation", []))),
+            card("주요 결정", render_decision_table(decisions)),
+            card("타임라인", render_records(events)),
+            card("리스크와 후속 조치", render_records(status.get("open_risks", [])) + render_records(risks)),
+            card("다음 액션", render_list(status.get("next_actions", []))),
+        ]
+    )
+
+    html_doc = f"""<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyhigh v1 작업 대시보드</title>
+<style>
+:root {{ color-scheme: light; --bg:#f7f7f4; --panel:#ffffff; --ink:#1d1d1f; --muted:#666b73; --line:#deded8; --good:#176b42; --warn:#9a5b00; --bad:#a32020; --neutral:#3451a3; }}
+body {{ margin:0; font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }}
+header {{ padding:34px 40px 20px; border-bottom:1px solid var(--line); background:#fff; }}
+h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:0; }}
+h2 {{ margin:0 0 14px; font-size:19px; }}
+h3 {{ margin:16px 0 6px; font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }}
+.eyebrow,.muted {{ color:var(--muted); }}
+.card {{ margin:18px auto; padding:22px; max-width:1180px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }}
+.row {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
+.pill {{ display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid currentColor; }}
+.good {{ color:var(--good); }} .warn {{ color:var(--warn); }} .bad {{ color:var(--bad); }} .neutral {{ color:var(--neutral); }}
+.milestone,.item {{ padding:12px 0; border-top:1px solid var(--line); }}
+.milestone:first-child,.item:first-child {{ border-top:0; }}
+.bar {{ height:8px; background:#ecece6; border-radius:999px; overflow:hidden; margin-top:10px; }}
+.bar span {{ display:block; height:100%; background:#3451a3; }}
+ul {{ margin:8px 0 0 18px; padding:0; }}
+details {{ margin-top:8px; }}
+summary {{ cursor:pointer; color:var(--neutral); }}
+.summary-grid {{ display:grid; grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr); gap:18px; }}
+.summary-main,.outcome {{ border:1px solid var(--line); border-radius:8px; padding:18px; background:#fbfbf8; }}
+.kv {{ margin:0; }}
+.kv div {{ padding:10px 0; border-top:1px solid var(--line); }}
+.kv div:first-child {{ border-top:0; }}
+.kv dt {{ font-weight:700; color:#3b3b3d; margin-bottom:3px; }}
+.kv dd {{ margin:0; color:var(--ink); }}
+table {{ width:100%; border-collapse:collapse; }}
+th,td {{ vertical-align:top; text-align:left; border-top:1px solid var(--line); padding:10px; }}
+th {{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }}
+td ul {{ margin-top:0; }}
+@media (max-width: 820px) {{ .summary-grid {{ grid-template-columns:1fr; }} header {{ padding:24px; }} .card {{ margin:12px; }} }}
+</style>
+</head>
+<body>{body}</body>
+</html>
+"""
+    output = dashboard_dir / "flyhigh-v1.html"
+    output.write_text(html_doc, encoding="utf-8")
+    print(f"wrote {output.relative_to(root)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-05-28T00:55:00+00:00",
+  "auth": {
+    "provider": "github.com",
+    "authenticated": true,
+    "account": "bborok1234",
+    "git_protocol": "ssh",
+    "token_scopes": [
+      "admin:public_key",
+      "gist",
+      "project",
+      "read:org",
+      "repo"
+    ],
+    "checked_by": "gh auth status",
+    "remote_write_performed": false
+  },
+  "repositories": [
+    {
+      "id": "flyhigh-harness",
+      "role": "harness-source",
+      "display_name": "Flyhigh harness",
+      "local_path": ".",
+      "branch": "main",
+      "remote_name": "origin",
+      "remote_url": "",
+      "remote_configured": false,
+      "publish_ready": false,
+      "publish_blockers": [
+        "git remote is not configured"
+      ],
+      "evidence": [
+        "git status --short",
+        "git remote -v"
+      ]
+    },
+    {
+      "id": "target-project",
+      "role": "github-operation-target",
+      "display_name": "Target project",
+      "local_path": "$FLYHIGH_TARGET_PROJECT_PATH",
+      "branch": "main",
+      "remote_name": "origin",
+      "remote_url": "",
+      "remote_configured": false,
+      "publish_ready": false,
+      "publish_blockers": [
+        "git remote is not configured",
+        "local path is supplied through FLYHIGH_TARGET_PROJECT_PATH to keep Flyhigh core domain-neutral"
+      ],
+      "evidence": [
+        "sibling target project git repo inspected",
+        "git remote -v"
+      ]
+    }
+  ]
+}

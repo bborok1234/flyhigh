@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def split(raw: str) -> list[str]:
+    return [item.strip() for item in raw.split("|") if item.strip()]
+
+
+def load_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_rows(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Record a Flyhigh autonomous work iteration.")
+    parser.add_argument("--id", required=True)
+    parser.add_argument("--goal", required=True)
+    parser.add_argument("--summary", required=True)
+    parser.add_argument("--issues", default="")
+    parser.add_argument("--validation", default="")
+    parser.add_argument("--status", default="completed")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    entry = {
+        "id": args.id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "goal": args.goal,
+        "summary": args.summary,
+        "issues": split(args.issues),
+        "validation": split(args.validation),
+        "status": args.status,
+    }
+    path = root / "state" / "iterations.jsonl"
+    rows = [row for row in load_rows(path) if row.get("id") != args.id]
+    rows.append(entry)
+    write_rows(path, rows)
+    print(f"upserted {args.id}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

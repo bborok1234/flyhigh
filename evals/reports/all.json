@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-05-28T04:00:43.293462+00:00",
+  "suite": "all",
+  "results": [
+    {
+      "suite": "bootstrap",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-bootstrap-fixture"
+      ],
+      "output": "bootstrap fixture ok"
+    },
+    {
+      "suite": "run-artifact",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-run-fixture"
+      ],
+      "output": "run artifact ok"
+    },
+    {
+      "suite": "policy",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-policy-fixture"
+      ],
+      "output": "policy fixture ok"
+    },
+    {
+      "suite": "skills",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-skills"
+      ],
+      "output": "skills ok (9 checked)"
+    },
+    {
+      "suite": "decision-memory",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-decisions"
+      ],
+      "output": "decisions ok (4 recorded)"
+    },
+    {
+      "suite": "dashboard",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/render-dashboard"
+      ],
+      "output": "wrote dashboard/flyhigh.html"
+    },
+    {
+      "suite": "skillopt",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-skillopt-fixture"
+      ],
+      "output": "skillopt ok (9 active skills, 1 staged candidates)"
+    },
+    {
+      "suite": "adapters",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-surfaces"
+      ],
+      "output": "codex surface generated\nadapters generated\nsurfaces ok"
+    },
+    {
+      "suite": "github-repositories",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-github-repositories"
+      ],
+      "output": "github repositories ok (2 repositories, auth=yes)"
+    },
+    {
+      "suite": "github-ops",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-github-ops"
+      ],
+      "output": "github ops ok (2 operations, 3 sync records)"
+    },
+    {
+      "suite": "operator-decisions",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-operator-decisions"
+      ],
+      "output": "operator decisions ok (3 decisions, 3 open)"
+    },
+    {
+      "suite": "hitl-governance",
+      "case": "default",
+      "score": 1.0,
+      "passed": true,
+      "evidence": [
+        "scripts/validate-hitl-governance"
+      ],
+      "output": "hitl governance ok (3 decisions, 0 responses)"
+    }
+  ],
+  "passed": true
+}

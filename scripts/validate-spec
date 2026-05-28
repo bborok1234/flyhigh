@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED_TOP = ["name", "version", "purpose", "canonical_sources", "schemas", "workflows", "adapters", "validation"]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    spec_path = root / "spec" / "harness-spec.json"
+    schema_path = root / "spec" / "flyhigh.schema.json"
+    errors: list[str] = []
+    if not spec_path.exists():
+        errors.append("missing spec/harness-spec.json")
+    if not schema_path.exists():
+        errors.append("missing spec/flyhigh.schema.json")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+
+    spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    for key in REQUIRED_TOP:
+        if key not in spec:
+            errors.append(f"spec missing {key}")
+    for source in spec.get("canonical_sources", {}).values():
+        if not (root / source).exists():
+            errors.append(f"canonical source missing: {source}")
+    for validator in spec.get("validation", {}).values():
+        if not (root / validator).exists():
+            errors.append(f"validator missing: {validator}")
+    for adapter in spec.get("adapters", {}).values():
+        output = adapter.get("output")
+        if output and not (root / output).exists():
+            errors.append(f"adapter output missing: {output}")
+
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print("spec ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

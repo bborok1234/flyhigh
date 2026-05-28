@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import subprocess
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    commands = [
+        ["scripts/validate-dashboard-state"],
+        ["scripts/validate-decisions"],
+        ["scripts/validate-skillopt"],
+        ["scripts/validate-evals"],
+        ["scripts/render-dashboard"],
+        ["scripts/validate-full-harness"],
+    ]
+    for command in commands:
+        result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+        print(f"$ {' '.join(command)}")
+        print(result.stdout)
+        if result.returncode != 0:
+            subprocess.run([
+                "scripts/create-issue",
+                "--id",
+                "AUTO-VALIDATION-FAIL",
+                "--title",
+                "자동 하네스 루프 검증 실패",
+                "--why",
+                "harness-loop 검증 명령 중 하나가 실패했다.",
+                "--lane",
+                "doing",
+                "--priority",
+                "high",
+                "--evidence",
+                "scripts/harness-loop",
+                "--next-action",
+                "실패한 검증 출력 확인 후 수정한다.",
+            ], cwd=root, check=False)
+            return result.returncode
+    subprocess.run([
+        "scripts/record-iteration",
+        "--id",
+        "ITER-AUTO-LATEST",
+        "--goal",
+        "자동 하네스 루프 검증",
+        "--summary",
+        "dashboard state, decisions, SkillOpt, evals, dashboard render, full harness validation이 모두 통과했다.",
+        "--issues",
+        "FH-002|FH-003",
+        "--validation",
+        "scripts/harness-loop|scripts/validate-full-harness",
+        "--status",
+        "completed",
+    ], cwd=root, check=False)
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
+    print("harness-loop ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

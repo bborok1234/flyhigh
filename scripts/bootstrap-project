@@ -1,0 +1,413 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import re
+from datetime import date
+from pathlib import Path
+from typing import Any
+
+
+COMMON_DIRECTORIES = [
+    "src",
+    "app",
+    "pages",
+    "components",
+    "lib",
+    "server",
+    "client",
+    "packages",
+    "apps",
+    "tests",
+    "test",
+    "docs",
+    "scripts",
+    "public",
+]
+
+MEMORY_FILES = {
+    "project-facts.md": "# Project Facts\n\nDurable facts about stack, layout, commands, and conventions.\n",
+    "decisions.md": "# Decisions\n\nImportant project decisions and rationale.\n",
+    "commands.md": "# Commands\n\nKnown-good commands and when to use them.\n",
+    "hazards.md": "# Hazards\n\nRecurring risks, fragile areas, and footguns.\n",
+    "failed-attempts.md": "# Failed Attempts\n\nApproaches tried and rejected with evidence.\n",
+    "skill-notes.md": "# Skill Notes\n\nProject-local notes for improving Flyhigh skills.\n",
+}
+
+
+def read_json(path: Path) -> dict[str, Any]:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def has_any(root: Path, names: list[str]) -> bool:
+    return any((root / name).exists() for name in names)
+
+
+def detect_package_manager(root: Path) -> list[str]:
+    managers: list[str] = []
+    markers = [
+        ("pnpm", "pnpm-lock.yaml"),
+        ("yarn", "yarn.lock"),
+        ("npm", "package-lock.json"),
+        ("bun", "bun.lockb"),
+        ("uv", "uv.lock"),
+        ("poetry", "poetry.lock"),
+        ("pip", "requirements.txt"),
+        ("cargo", "Cargo.lock"),
+        ("go", "go.sum"),
+    ]
+    for manager, marker in markers:
+        if (root / marker).exists():
+            managers.append(manager)
+    if (root / "package.json").exists() and not any(m in managers for m in ["pnpm", "yarn", "npm", "bun"]):
+        managers.append("npm")
+    return managers
+
+
+def detect_stack(root: Path) -> list[str]:
+    stack: list[str] = []
+    package = read_json(root / "package.json") if (root / "package.json").exists() else {}
+    deps = {}
+    for key in ["dependencies", "devDependencies", "peerDependencies"]:
+        deps.update(package.get(key, {}) if isinstance(package.get(key), dict) else {})
+
+    if package:
+        stack.append("JavaScript/TypeScript")
+        if "next" in deps:
+            stack.append("Next.js")
+        if "react" in deps:
+            stack.append("React")
+        if "vite" in deps:
+            stack.append("Vite")
+        if "typescript" in deps or (root / "tsconfig.json").exists():
+            stack.append("TypeScript")
+
+    if has_any(root, ["pyproject.toml", "requirements.txt", "setup.py"]):
+        stack.append("Python")
+        pyproject = read_text(root / "pyproject.toml")
+        if "django" in pyproject.lower():
+            stack.append("Django")
+        if "fastapi" in pyproject.lower():
+            stack.append("FastAPI")
+
+    if (root / "Cargo.toml").exists():
+        stack.append("Rust")
+    if (root / "go.mod").exists():
+        stack.append("Go")
+    if has_any(root, ["pom.xml", "build.gradle", "build.gradle.kts"]):
+        stack.append("Java/JVM")
+    if (root / "Dockerfile").exists():
+        stack.append("Docker")
+
+    return unique(stack) or ["Unknown"]
+
+
+def package_scripts(root: Path) -> dict[str, str]:
+    package = read_json(root / "package.json")
+    scripts = package.get("scripts", {})
+    return scripts if isinstance(scripts, dict) else {}
+
+
+def command_prefix(managers: list[str]) -> str:
+    for candidate in ["pnpm", "yarn", "bun", "npm"]:
+        if candidate in managers:
+            if candidate == "npm":
+                return "npm run"
+            return candidate
+    return "npm run"
+
+
+def detect_commands(root: Path, managers: list[str]) -> dict[str, list[str]]:
+    commands = {"main": [], "test": [], "build": [], "lint": [], "typecheck": []}
+    scripts = package_scripts(root)
+    prefix = command_prefix(managers)
+
+    for name in scripts:
+        command = f"{prefix} {name}"
+        if name in ["dev", "start"]:
+            commands["main"].append(command)
+        if "test" in name:
+            commands["test"].append(command)
+        if "build" in name:
+            commands["build"].append(command)
+        if "lint" in name:
+            commands["lint"].append(command)
+        if "type" in name or "tsc" in scripts.get(name, ""):
+            commands["typecheck"].append(command)
+
+    if (root / "pyproject.toml").exists() or (root / "requirements.txt").exists():
+        if has_any(root, ["tests", "test"]):
+            commands["test"].append(detect_python_test_command(root))
+        if (root / "ruff.toml").exists() or "ruff" in read_text(root / "pyproject.toml"):
+            commands["lint"].append("ruff check .")
+        if "mypy" in read_text(root / "pyproject.toml"):
+            commands["typecheck"].append("mypy .")
+
+    if (root / "Cargo.toml").exists():
+        commands["test"].append("cargo test")
+        commands["build"].append("cargo build")
+        commands["lint"].append("cargo clippy")
+
+    if (root / "go.mod").exists():
+        commands["test"].append("go test ./...")
+        commands["build"].append("go build ./...")
+
+    makefile = root / "Makefile"
+    if makefile.exists():
+        targets = parse_make_targets(makefile)
+        for target in targets:
+            command = f"make {target}"
+            if target in ["dev", "run", "start"]:
+                commands["main"].append(command)
+            if "test" in target:
+                commands["test"].append(command)
+            if "build" in target:
+                commands["build"].append(command)
+            if "lint" in target:
+                commands["lint"].append(command)
+
+    return {key: unique(value) for key, value in commands.items()}
+
+
+def detect_python_test_command(root: Path) -> str:
+    prefix = "PYTHONPATH=src " if (root / "src").is_dir() else ""
+    if python_project_mentions_pytest(root):
+        return f"{prefix}python -m pytest"
+    return f"{prefix}python -m unittest"
+
+
+def python_project_mentions_pytest(root: Path) -> bool:
+    search_files = [root / "pyproject.toml", root / "requirements.txt", root / "requirements-dev.txt"]
+    for path in search_files:
+        if "pytest" in read_text(path).lower():
+            return True
+    for test_root_name in ["tests", "test"]:
+        test_root = root / test_root_name
+        if not test_root.exists():
+            continue
+        for path in test_root.rglob("*.py"):
+            text = read_text(path).lower()
+            if "import pytest" in text or "from pytest" in text:
+                return True
+    return False
+
+
+def parse_make_targets(path: Path) -> list[str]:
+    targets: list[str] = []
+    for line in read_text(path).splitlines():
+        match = re.match(r"^([A-Za-z0-9_.-]+):(?:\s|$)", line)
+        if match and not line.startswith("."):
+            targets.append(match.group(1))
+    return unique(targets)
+
+
+def detect_directories(root: Path) -> list[str]:
+    return [name for name in COMMON_DIRECTORIES if (root / name).is_dir()]
+
+
+def detect_conventions(root: Path) -> list[str]:
+    conventions: list[str] = []
+    markers = [
+        ("ESLint configured", [".eslintrc", ".eslintrc.json", ".eslintrc.cjs", "eslint.config.js", "eslint.config.mjs"]),
+        ("Prettier configured", [".prettierrc", ".prettierrc.json", "prettier.config.js"]),
+        ("TypeScript configured", ["tsconfig.json"]),
+        ("EditorConfig configured", [".editorconfig"]),
+        ("Docker configured", ["Dockerfile", "docker-compose.yml", "compose.yml"]),
+        ("GitHub Actions configured", [".github/workflows"]),
+    ]
+    for label, names in markers:
+        if has_any(root, names):
+            conventions.append(label)
+    if (root / "README.md").exists():
+        conventions.append("README present")
+    return conventions
+
+
+def detect_hazards(root: Path, managers: list[str], commands: dict[str, list[str]]) -> list[str]:
+    hazards: list[str] = []
+    js_managers = [m for m in managers if m in ["pnpm", "yarn", "npm", "bun"]]
+    if len(js_managers) > 1:
+        hazards.append(f"Multiple JavaScript package managers detected: {', '.join(js_managers)}")
+    if not commands["test"]:
+        hazards.append("No test command inferred; verify manually before claiming completion.")
+    if (root / "AGENTS.md").exists():
+        hazards.append("Existing AGENTS.md found; bootstrap should avoid overwriting without explicit force.")
+    if not (root / ".git").exists():
+        hazards.append("No .git directory detected; version-control status may be unavailable.")
+    if "Unknown" in detect_stack(root):
+        hazards.append("Stack could not be inferred from common marker files.")
+    return hazards
+
+
+def unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
+
+
+def bullet(values: list[str], fallback: str = "Not inferred") -> str:
+    if not values:
+        return f"- {fallback}"
+    return "\n".join(f"- {value}" for value in values)
+
+
+def render_agents(facts: dict[str, Any], template: str) -> str:
+    commands = facts["commands"]
+    replacements = {
+        "generated_on": date.today().isoformat(),
+        "stack": bullet(facts["stack"]),
+        "package_managers": bullet(facts["package_managers"]),
+        "directories": bullet(facts["directories"]),
+        "conventions": bullet(facts["conventions"]),
+        "main_commands": bullet(commands["main"]),
+        "test_commands": bullet(commands["test"]),
+        "typecheck_commands": bullet(commands["typecheck"]),
+        "lint_commands": bullet(commands["lint"]),
+        "build_commands": bullet(commands["build"]),
+        "hazards": bullet(facts["hazards"], "No bootstrap hazards inferred"),
+    }
+    rendered = template
+    for key, value in replacements.items():
+        rendered = rendered.replace("{{" + key + "}}", value)
+    return rendered
+
+
+def render_report(facts: dict[str, Any], agents_path: Path) -> str:
+    commands = facts["commands"]
+    return f"""# Flyhigh Bootstrap Report
+
+Generated: {date.today().isoformat()}
+Target: `{facts["root"]}`
+AGENTS path: `{agents_path}`
+
+## Inferred Stack
+
+{bullet(facts["stack"])}
+
+## Package Managers
+
+{bullet(facts["package_managers"])}
+
+## Commands
+
+Main:
+{bullet(commands["main"])}
+
+Test:
+{bullet(commands["test"])}
+
+Typecheck:
+{bullet(commands["typecheck"])}
+
+Lint:
+{bullet(commands["lint"])}
+
+Build:
+{bullet(commands["build"])}
+
+## Directories
+
+{bullet(facts["directories"])}
+
+## Conventions
+
+{bullet(facts["conventions"])}
+
+## Hazards
+
+{bullet(facts["hazards"], "No bootstrap hazards inferred")}
+
+## Next Validation
+
+- Review `AGENTS.md` for incorrect assumptions.
+- Run the inferred validation commands that apply to the next task.
+- Update `.flyhigh/memory/` when project facts change.
+"""
+
+
+def write_memory(root: Path, dry_run: bool) -> list[Path]:
+    memory_root = root / ".flyhigh" / "memory"
+    paths: list[Path] = []
+    for name, content in MEMORY_FILES.items():
+        path = memory_root / name
+        paths.append(path)
+        if dry_run or path.exists():
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    return paths
+
+
+def collect_facts(root: Path) -> dict[str, Any]:
+    managers = detect_package_manager(root)
+    commands = detect_commands(root, managers)
+    facts = {
+        "root": str(root),
+        "stack": detect_stack(root),
+        "package_managers": managers or ["Not inferred"],
+        "commands": commands,
+        "directories": detect_directories(root),
+        "conventions": detect_conventions(root),
+        "hazards": [],
+    }
+    facts["hazards"] = detect_hazards(root, managers, commands)
+    return facts
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Bootstrap a target repository with Flyhigh project instructions.")
+    parser.add_argument("target", nargs="?", default=".", help="Target repository path.")
+    parser.add_argument("--force", action="store_true", help="Overwrite AGENTS.md if it already exists.")
+    parser.add_argument("--dry-run", action="store_true", help="Print planned outputs without writing files.")
+    args = parser.parse_args()
+
+    root = Path(args.target).resolve()
+    if not root.exists() or not root.is_dir():
+        parser.error(f"target is not a directory: {root}")
+
+    facts = collect_facts(root)
+    plugin_root = Path(__file__).resolve().parents[1]
+    template_path = plugin_root / "templates" / "AGENTS.md"
+    template = template_path.read_text(encoding="utf-8")
+    agents_path = root / "AGENTS.md"
+    report_path = root / ".flyhigh" / "bootstrap-report.md"
+
+    if agents_path.exists() and not args.force:
+        agents_path = root / "AGENTS.flyhigh.generated.md"
+
+    agents_text = render_agents(facts, template)
+    report_text = render_report(facts, agents_path)
+    memory_paths = write_memory(root, args.dry_run)
+
+    if args.dry_run:
+        print(agents_text)
+        print(f"\nWould write report: {report_path}")
+        for path in memory_paths:
+            print(f"Would ensure memory file: {path}")
+        return 0
+
+    agents_path.write_text(agents_text, encoding="utf-8")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(report_text, encoding="utf-8")
+
+    print(f"wrote {agents_path}")
+    print(f"wrote {report_path}")
+    print(f"ensured {len(memory_paths)} memory files")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

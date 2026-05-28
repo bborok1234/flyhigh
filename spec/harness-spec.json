@@ -1,0 +1,162 @@
+{
+  "name": "flyhigh",
+  "version": "1.0.0-full-harness",
+  "purpose": "Codex-first personal engineering harness with generated adapters, decision memory, policy gates, evals, SkillOpt-inspired skill evolution, and Korean human dashboard.",
+  "canonical_sources": {
+    "skills": "skills/active",
+    "decision_memory": "state/decisions.jsonl",
+    "operator_decisions": "state/operator-decisions.jsonl",
+    "operator_responses": "state/operator-responses.jsonl",
+    "policy": "policies/default-policy.json",
+    "skillopt": "state/skillopt",
+    "dashboard_state": "state/full-status.json",
+    "issues": "state/issues.jsonl",
+    "iterations": "state/iterations.jsonl",
+    "github_operations": "state/github/operations.jsonl",
+    "github_repositories": "state/github/repositories.json",
+    "github_sync_log": "state/github/sync-log.jsonl"
+  },
+  "schemas": {
+    "decision_required_fields": [
+      "id",
+      "timestamp",
+      "title",
+      "context",
+      "decision",
+      "rationale",
+      "alternatives_rejected",
+      "evidence",
+      "affected_files",
+      "status",
+      "follow_up"
+    ],
+    "skill_patch_required_fields": [
+      "id",
+      "skill",
+      "operation",
+      "target",
+      "replacement",
+      "evidence",
+      "expected_score_delta",
+      "status"
+    ],
+    "eval_result_required_fields": [
+      "suite",
+      "case",
+      "score",
+      "passed",
+      "evidence"
+    ],
+    "github_operation_required_fields": [
+      "id",
+      "timestamp",
+      "kind",
+      "repository_id",
+      "target_repo",
+      "title",
+      "why",
+      "body",
+      "labels",
+      "linked_items",
+      "status",
+      "lane",
+      "approval_required",
+      "publish_ready",
+      "publish_blockers",
+      "evidence",
+      "next_action"
+    ],
+    "github_repository_required_fields": [
+      "id",
+      "role",
+      "display_name",
+      "local_path",
+      "branch",
+      "remote_name",
+      "remote_url",
+      "remote_configured",
+      "publish_ready",
+      "publish_blockers",
+      "evidence"
+    ],
+    "operator_decision_required_fields": [
+      "id",
+      "timestamp",
+      "source_id",
+      "title",
+      "question",
+      "recommendation",
+      "recommendation_label",
+      "rationale",
+      "options",
+      "risk",
+      "evidence",
+      "status",
+      "owner",
+      "execution_path",
+      "decision_type",
+      "autonomy_level",
+      "approval_scope",
+      "reversibility",
+      "risk_level",
+      "apply_gate",
+      "valid_until_context_changes",
+      "copy_command"
+    ],
+    "operator_response_required_fields": [
+      "id",
+      "timestamp",
+      "decision_id",
+      "source_id",
+      "option_id",
+      "approval_scope",
+      "operator",
+      "status",
+      "apply_gate",
+      "autonomy_level",
+      "risk_level",
+      "reversibility",
+      "source_command"
+    ]
+  },
+  "workflows": [
+    "project-bootstrap",
+    "analyze",
+    "plan",
+    "implement",
+    "review",
+    "qa",
+    "ship",
+    "learn",
+    "session-handoff"
+  ],
+  "adapters": {
+    "codex": {
+      "output": "adapters/codex/AGENTS.md",
+      "source": "skills/active"
+    },
+    "claude": {
+      "output": "adapters/claude/CLAUDE.md",
+      "commands": "adapters/claude/commands",
+      "source": "skills/active"
+    },
+    "opencode": {
+      "output": "adapters/opencode/AGENTS.md",
+      "source": "skills/active"
+    }
+  },
+  "validation": {
+    "full_harness": "scripts/validate-full-harness",
+    "spec": "scripts/validate-spec",
+    "decisions": "scripts/validate-decisions",
+    "skillopt": "scripts/validate-skillopt",
+    "policy": "scripts/validate-policy",
+    "surfaces": "scripts/validate-surfaces",
+    "evals": "scripts/validate-evals",
+    "dashboard_state": "scripts/validate-dashboard-state",
+    "github_repositories": "scripts/validate-github-repositories",
+    "github_operations": "scripts/validate-github-ops",
+    "operator_decisions": "scripts/validate-operator-decisions",
+    "hitl_governance": "scripts/validate-hitl-governance"
+  }
+}

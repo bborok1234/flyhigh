@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Score a staged skill candidate.")
+    parser.add_argument("candidate_id")
+    parser.add_argument("--baseline", type=float, default=0.8)
+    parser.add_argument("--candidate", type=float, default=0.9)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    candidate_dir = root / "skills" / "staging" / args.candidate_id
+    patch_path = candidate_dir / "patch.json"
+    if not patch_path.exists():
+        print(f"missing {patch_path}", file=sys.stderr)
+        return 1
+    validation = subprocess.run(["scripts/validate-skills"], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    patch = json.loads(patch_path.read_text(encoding="utf-8"))
+    score = {
+        "candidate_id": args.candidate_id,
+        "skill": patch["skill"],
+        "baseline_score": args.baseline,
+        "candidate_score": args.candidate,
+        "delta": round(args.candidate - args.baseline, 4),
+        "passed": validation.returncode == 0 and args.candidate >= args.baseline,
+        "validation_output": validation.stdout.strip()
+    }
+    (candidate_dir / "score.json").write_text(json.dumps(score, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"score {score['candidate_score']} delta {score['delta']} passed={score['passed']}")
+    return 0 if score["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

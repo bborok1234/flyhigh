@@ -1,0 +1,153 @@
+{
+  "goal": "Flyhigh v1 personal engineering harness",
+  "status": "complete",
+  "updated_at": "2026-05-27",
+  "audience": "human maintainer using Korean",
+  "executive_summary": {
+    "why": "작은 goal 단위는 개별 기능 검증에는 좋았지만, 전체 제품 방향과 누적 결정 맥락을 따라가기 어렵게 만들었다. 그래서 v1은 하나의 큰 delivery로 수행했고, 작업 상태와 결정/결과/리스크를 구조화된 SSOT와 HTML 대시보드로 추적하게 만들었다.",
+    "what_changed": "Flyhigh는 단순 scaffold와 bootstrap 스크립트에서, run artifact, policy preflight, eval runner, generated adapters, SSOT 진행 상태, validate-v1 검증 명령을 갖춘 local-first Codex 엔지니어링 하네스로 확장되었다.",
+    "current_result": "v1 baseline은 완료되었고 로컬 검증을 통과했다. 의도적으로 도메인 중립을 유지했고, 별도 wrapper runtime은 만들지 않았다.",
+    "how_to_judge": "기술적 증거는 scripts/validate-v1로 확인하고, 사람이 보는 진행/결정/결과는 dashboard/flyhigh-v1.html에서 확인한다. 결정과 이벤트의 원천 기록은 state/*.jsonl에 남는다."
+  },
+  "outcome": {
+    "result": "사용 가능한 v1 baseline",
+    "validation": "scripts/validate-v1이 모든 필수 검증을 통과했다.",
+    "deferrals": [
+      "Policy preflight는 v1에서 hard block이 아니라 warning-first로 동작한다.",
+      "Adapters는 canonical source가 아니라 생성된 compatibility surface다.",
+      "Hosted dashboard, daemon, wrapper runtime은 추가하지 않았다."
+    ],
+    "recommended_next_move": "다음 실제 target repo에 Flyhigh v1을 적용하고, bootstrap 품질, policy warning의 실효성, run artifact가 후속 작업 추적성을 개선하는지 기록한다."
+  },
+  "milestones": [
+    {
+      "id": "m1",
+      "title": "SSOT dashboard",
+      "status": "complete",
+      "progress": 100,
+      "why": "작업 진행상황, 결정, 리스크, 검증 증거를 사람이 한 화면에서 따라갈 수 있어야 했다.",
+      "decision": "JSON/JSONL을 SSOT로 두고, 여기서 하나의 정적 HTML 대시보드를 생성하기로 했다.",
+      "result": "구조화된 state와 dashboard renderer가 생겼고, 대시보드는 손으로 관리하지 않고 state에서 생성된다.",
+      "files": [
+        "state/v1-status.json",
+        "state/v1-decisions.jsonl",
+        "state/v1-events.jsonl",
+        "state/v1-risks.jsonl",
+        "scripts/render-v1-dashboard",
+        "dashboard/flyhigh-v1.html"
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Run artifact writer",
+      "status": "complete",
+      "progress": 100,
+      "why": "긴 agent 작업은 채팅 기억만으로는 추적이 어렵기 때문에 재현 가능한 증거 폴더가 필요했다.",
+      "decision": "무거운 자동화보다 먼저 최소 deterministic run folder contract를 만들기로 했다.",
+      "result": "create-run과 validate-run이 manifest, plan, events, tool-calls, verification, final 파일을 생성하고 검증한다.",
+      "files": [
+        "scripts/create-run",
+        "scripts/validate-run",
+        "scripts/validate-run-fixture",
+        "evals/fixtures/run-artifact/basic/rubric.md"
+      ]
+    },
+    {
+      "id": "m3",
+      "title": "Policy preflight",
+      "status": "complete",
+      "progress": 100,
+      "why": "하네스는 실수도 증폭할 수 있으므로 위험한 명령과 안전하지 않은 파일 변경을 먼저 드러내야 했다.",
+      "decision": "정상적인 로컬 개발을 막지 않기 위해 v1에서는 warning-first check로 시작하기로 했다.",
+      "result": "policy-preflight가 destructive command, dependency change, broad churn, likely secret file, generated instruction drift를 감지한다.",
+      "files": [
+        "scripts/policy-preflight",
+        "scripts/validate-policy-fixture",
+        "evals/fixtures/policy/basic/rubric.md"
+      ]
+    },
+    {
+      "id": "m4",
+      "title": "Eval lab",
+      "status": "complete",
+      "progress": 100,
+      "why": "Skill과 harness 변경은 느낌이 아니라 측정 가능한 결과를 개선해야 한다.",
+      "decision": "v1에서는 lightweight local fixture와 validator를 쓰고, 더 정교한 scoring은 실제 사용 후 확장하기로 했다.",
+      "result": "run-evals가 plugin, skill, bootstrap, run artifact, policy, adapter check를 실행하고 report를 남긴다.",
+      "files": [
+        "scripts/run-evals",
+        "evals/fixtures/bootstrap/basic-node-repo/rubric.md",
+        "evals/fixtures/skills/basic/rubric.md",
+        "evals/fixtures/adapters/basic/rubric.md"
+      ]
+    },
+    {
+      "id": "m5",
+      "title": "Adapter sync",
+      "status": "complete",
+      "progress": 100,
+      "why": "Flyhigh는 Codex-first여야 하지만 Claude/OpenCode 계열 도구에서도 쓸 수 있어야 했다.",
+      "decision": "별도 source를 손으로 유지하지 않고 canonical Flyhigh skills에서 adapter를 생성하기로 했다.",
+      "result": "Claude instructions, Claude command wrappers, OpenCode AGENTS instructions가 생성되고 검증된다.",
+      "files": [
+        "scripts/generate-adapters",
+        "scripts/validate-adapters",
+        "adapters/claude/CLAUDE.md",
+        "adapters/claude/commands/",
+        "adapters/opencode/AGENTS.md"
+      ]
+    },
+    {
+      "id": "m6",
+      "title": "V1 validation",
+      "status": "complete",
+      "progress": 100,
+      "why": "하나의 큰 goal은 요청 범위가 실제로 완료되었음을 증명하는 단일 검증 명령이 필요했다.",
+      "decision": "모든 의미 있는 로컬 validator를 묶는 completion gate로 validate-v1을 만들기로 했다.",
+      "result": "validate-v1이 plugin, skill, bootstrap, run artifact, policy, adapter, eval, dashboard, domain-neutrality check를 통과한다.",
+      "files": [
+        "scripts/validate-v1",
+        "evals/reports/latest.json",
+        "evals/reports/v1-validation.json"
+      ]
+    }
+  ],
+  "workstreams": [
+    {
+      "id": "ws-dashboard",
+      "title": "Progress SSOT and dashboard",
+      "status": "complete",
+      "summary": "구조화된 진행 상태를 source of truth로 유지하고 단일 HTML 대시보드를 생성한다."
+    },
+    {
+      "id": "ws-harness",
+      "title": "Harness scripts",
+      "status": "complete",
+      "summary": "run artifact, policy check, adapter, eval, v1 validation을 위한 deterministic script를 구현한다."
+    },
+    {
+      "id": "ws-docs",
+      "title": "Stable v1 docs",
+      "status": "complete",
+      "summary": "문서가 추측이 아니라 실제 구현된 v1 동작을 설명하도록 갱신한다."
+    }
+  ],
+  "validation": [
+    {
+      "id": "validation-001",
+      "title": "V1 validators pass",
+      "summary": "validate-v1이 local plugin, skill, fixture, adapter, eval, dashboard, domain-neutrality check를 모두 통과했다.",
+      "evidence": [
+        "scripts/validate-v1",
+        "evals/reports/v1-validation.json"
+      ],
+      "status": "passed"
+    }
+  ],
+  "open_risks": [],
+  "next_actions": [
+    "다음 target repo에 Flyhigh v1을 적용하고 bootstrap 품질을 기록한다.",
+    "v1 baseline을 커밋할지 결정한다.",
+    "실제 사용 데이터를 본 뒤 v1.1에서 더 엄격한 policy check를 추가한다."
+  ]
+}

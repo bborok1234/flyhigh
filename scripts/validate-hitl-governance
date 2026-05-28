@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+DECISION_REQUIRED = [
+    "decision_type",
+    "autonomy_level",
+    "approval_scope",
+    "reversibility",
+    "risk_level",
+    "apply_gate",
+    "valid_until_context_changes",
+    "copy_command",
+]
+RESPONSE_REQUIRED = [
+    "id",
+    "timestamp",
+    "decision_id",
+    "source_id",
+    "option_id",
+    "approval_scope",
+    "operator",
+    "status",
+    "apply_gate",
+    "autonomy_level",
+    "risk_level",
+    "reversibility",
+    "source_command",
+]
+AUTONOMY_LEVELS = {"auto", "recommend_then_apply", "explicit_approval_required"}
+SCOPES = {"draft_only", "prepare_only", "local_apply", "publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}
+REVERSIBILITY = {"reversible", "partially_reversible", "irreversible"}
+RISK_LEVELS = {"low", "medium", "high"}
+RESPONSE_STATUSES = {"pending", "applied", "blocked", "superseded"}
+EXPLICIT_SCOPES = {"publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    decisions = load_jsonl(root / "state" / "operator-decisions.jsonl")
+    responses_path = root / "state" / "operator-responses.jsonl"
+    responses = load_jsonl(responses_path)
+    github_ops = load_jsonl(root / "state" / "github" / "operations.jsonl")
+    errors: list[str] = []
+
+    if not responses_path.exists():
+        errors.append("missing state/operator-responses.jsonl")
+    for decision in decisions:
+        for key in DECISION_REQUIRED:
+            if key not in decision:
+                errors.append(f"{decision.get('id')} missing {key}")
+        if decision.get("autonomy_level") not in AUTONOMY_LEVELS:
+            errors.append(f"{decision.get('id')} invalid autonomy_level {decision.get('autonomy_level')}")
+        if decision.get("approval_scope") not in SCOPES:
+            errors.append(f"{decision.get('id')} invalid approval_scope {decision.get('approval_scope')}")
+        if decision.get("reversibility") not in REVERSIBILITY:
+            errors.append(f"{decision.get('id')} invalid reversibility {decision.get('reversibility')}")
+        if decision.get("risk_level") not in RISK_LEVELS:
+            errors.append(f"{decision.get('id')} invalid risk_level {decision.get('risk_level')}")
+        if not decision.get("valid_until_context_changes"):
+            errors.append(f"{decision.get('id')} missing stale-context guard")
+        if decision.get("approval_scope") in EXPLICIT_SCOPES and decision.get("autonomy_level") != "explicit_approval_required":
+            errors.append(f"{decision.get('id')} external scope without explicit approval")
+        for option in decision.get("options", []):
+            if option.get("approval_scope") not in SCOPES:
+                errors.append(f"{decision.get('id')} option {option.get('id')} invalid approval_scope {option.get('approval_scope')}")
+    decision_by_id = {row.get("id"): row for row in decisions}
+    for response in responses:
+        for key in RESPONSE_REQUIRED:
+            if key not in response:
+                errors.append(f"{response.get('id')} missing {key}")
+        if response.get("status") not in RESPONSE_STATUSES:
+            errors.append(f"{response.get('id')} invalid status {response.get('status')}")
+        decision = decision_by_id.get(response.get("decision_id"))
+        if not decision:
+            errors.append(f"{response.get('id')} references missing decision {response.get('decision_id')}")
+            continue
+        option = next((item for item in decision.get("options", []) if item.get("id") == response.get("option_id")), None)
+        if not option:
+            errors.append(f"{response.get('id')} references missing option {response.get('option_id')}")
+            continue
+        if option.get("approval_scope") != response.get("approval_scope"):
+            errors.append(f"{response.get('id')} scope does not match selected option")
+    for op in github_ops:
+        if op.get("publish_approved_at") and op.get("publish_approval_scope") != "publish_issue":
+            errors.append(f"{op.get('id')} has invalid publish approval scope")
+        if op.get("status") == "published" and not op.get("publish_approved_by"):
+            errors.append(f"{op.get('id')} published without scoped publish approval")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"hitl governance ok ({len(decisions)} decisions, {len(responses)} responses)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
