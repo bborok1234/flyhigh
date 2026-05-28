@@ -1,0 +1,13 @@
+{
+  "id": "fixture-rejected-qa-note",
+  "timestamp": "2026-05-28T05:02:09.775204+00:00",
+  "skill": "qa",
+  "operation": "add",
+  "target": "end",
+  "replacement": "## Candidate Note\n\nAlways be better.\n",
+  "evidence": [
+    "evals/suites/skillopt/basic/rubric.md"
+  ],
+  "expected_score_delta": -0.1,
+  "status": "rejected"
+}

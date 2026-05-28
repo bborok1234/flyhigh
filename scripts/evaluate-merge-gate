@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+APPROVED_DECISIONS = {"approved", "merged"}
+MERGEABLE_STATES = {"CLEAN", "HAS_HOOKS", "UNKNOWN"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def resolve_repo(root: Path, repo_id: str) -> str:
+    return subprocess.check_output(["scripts/repo-resolver.py", repo_id], cwd=root, text=True).strip()
+
+
+def gh_pr(root: Path, repo_id: str, pr_number: int) -> dict:
+    repo = resolve_repo(root, repo_id)
+    output = subprocess.check_output([
+        "gh", "pr", "view", str(pr_number),
+        "--repo", repo,
+        "--json", "state,mergeStateStatus,isDraft,url,headRefName,baseRefName,statusCheckRollup",
+    ], cwd=root, text=True)
+    return json.loads(output)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Evaluate one or all Flyhigh merge gates.")
+    parser.add_argument("gate_id", nargs="?")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    gate_path = root / "state" / "github" / "merge-gates.jsonl"
+    gates = load_jsonl(gate_path)
+    reviews = {row.get("review_id"): row for row in load_jsonl(root / "state" / "reviews" / "direction-reviews.jsonl")}
+    errors: list[str] = []
+    changed = False
+
+    for gate in gates:
+        if args.gate_id and gate.get("id") != args.gate_id:
+            continue
+        review = reviews.get(gate.get("direction_review_id"))
+        blockers: list[str] = []
+        if not review or review.get("status") != "accepted":
+            blockers.append("direction review is not accepted")
+        if gate.get("merge_decision") not in APPROVED_DECISIONS:
+            blockers.append("merge decision is not approved")
+        if "no_hold" in gate.get("required_checks", []) and gate.get("hold_reason"):
+            blockers.append(f"hold: {gate.get('hold_reason')}")
+        try:
+            pr = gh_pr(root, gate["repo_id"], int(gate["pr_number"]))
+            gate["pr_url"] = pr.get("url", gate.get("pr_url", ""))
+            gate["last_pr_state"] = pr.get("state")
+            gate["last_merge_state"] = pr.get("mergeStateStatus")
+            gate["last_evaluated_at"] = datetime.now(timezone.utc).isoformat()
+            if pr.get("isDraft"):
+                blockers.append("PR is draft")
+            if pr.get("state") not in {"OPEN", "MERGED"}:
+                blockers.append(f"PR state is {pr.get('state')}")
+            if pr.get("state") == "OPEN" and pr.get("mergeStateStatus") not in MERGEABLE_STATES:
+                blockers.append(f"merge state is {pr.get('mergeStateStatus')}")
+        except subprocess.CalledProcessError as exc:
+            blockers.append(f"gh pr view failed: {exc}")
+        gate["gate_status"] = "passed" if not blockers else "blocked"
+        gate["blockers"] = blockers
+        changed = True
+        print(f"{gate.get('id')}: {gate['gate_status']}")
+        for blocker in blockers:
+            print(f"- {blocker}")
+        if blockers:
+            errors.append(gate.get("id", "unknown"))
+
+    if changed:
+        write_jsonl(gate_path, gates)
+    if errors:
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+EXTERNAL_SCOPES = {"publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}
+
+
+def load_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_rows(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = "\n".join(json.dumps(row, ensure_ascii=False) for row in rows)
+    path.write_text((text + "\n") if text else "", encoding="utf-8")
+
+
+def append_sync(root: Path, entry: dict) -> None:
+    path = root / "state" / "github" / "sync-log.jsonl"
+    rows = [row for row in load_rows(path) if row.get("id") != entry.get("id")]
+    rows.append(entry)
+    write_rows(path, rows)
+
+
+def find_option(decision: dict, option_id: str) -> dict | None:
+    return next((option for option in decision.get("options", []) if option.get("id") == option_id), None)
+
+
+def record_publish_approval(root: Path, response: dict, timestamp: str) -> list[str]:
+    path = root / "state" / "github" / "operations.jsonl"
+    rows = load_rows(path)
+    changed: list[str] = []
+    for row in rows:
+        if row.get("id") != response.get("source_id"):
+            continue
+        row["publish_approval_scope"] = response.get("approval_scope")
+        row["publish_approved_by"] = response.get("operator")
+        row["publish_approved_at"] = timestamp
+        row["publish_decision_id"] = response.get("decision_id")
+        row["publish_response_id"] = response.get("id")
+        if row.get("publish_ready"):
+            row["next_action"] = "게시 scope 승인 기록 완료. 원격 write는 FLYHIGH_GITHUB_EXECUTE=1과 --execute가 있을 때만 실행한다."
+        else:
+            row["next_action"] = "게시 scope 승인 기록 완료. repository mapping이 publish-ready가 될 때까지 원격 write는 차단된다."
+        changed.append(row.get("id", ""))
+    if changed:
+        write_rows(path, rows)
+        append_sync(root, {
+            "id": f"GHSYNC-{response.get('source_id')}-PUBLISH-APPROVAL",
+            "timestamp": timestamp,
+            "summary": f"{response.get('source_id')} scoped publish approval recorded",
+            "operations": changed,
+            "result": "approval recorded only; no remote GitHub write performed.",
+            "evidence": ["state/operator-responses.jsonl", "scripts/apply-operator-decisions"],
+        })
+    return changed
+
+
+def split_operation(root: Path, response: dict, timestamp: str) -> list[str]:
+    if response.get("source_id") != "GH-002" or response.get("option_id") != "split_before_publish":
+        return []
+    path = root / "state" / "github" / "operations.jsonl"
+    rows = load_rows(path)
+    existing_ids = {row.get("id") for row in rows}
+    source = next((row for row in rows if row.get("id") == "GH-002"), {})
+    templates = [
+        ("GH-002A", "데이터 입력 adapter 경계 정의", "adapter 인터페이스와 fixture 기준을 분리해 첫 구현 단위를 작게 만든다."),
+        ("GH-002B", "작업 registry와 실행 단위 분리", "registry가 입력 adapter와 report artifact 사이의 연결 지점을 명확히 하도록 한다."),
+        ("GH-002C", "report artifact schema와 검증 추가", "작업 결과가 dashboard와 run artifact에 안정적으로 남도록 schema와 검증을 추가한다."),
+    ]
+    created: list[str] = []
+    for op_id, title, why in templates:
+        if op_id in existing_ids:
+            continue
+        rows.append({
+            "id": op_id,
+            "timestamp": timestamp[:10],
+            "kind": "issue",
+            "repository_id": source.get("repository_id", "target-project"),
+            "target_repo": source.get("target_repo", "target-project"),
+            "title": title,
+            "why": why,
+            "body": f"## 목적\n\n{why}\n\n## 수용 기준\n\n- 범위가 단일 PR로 검증 가능하다.\n- Flyhigh run artifact에 결과가 기록된다.\n- dashboard와 GitHub operation SSOT에서 추적된다.",
+            "labels": source.get("labels", ["flyhigh", "operator-review"]),
+            "linked_items": source.get("linked_items", ["FH-007"]),
+            "status": "needs_approval",
+            "lane": "needs_approval",
+            "approval_required": True,
+            "publish_ready": False,
+            "publish_blockers": source.get("publish_blockers", ["repository mapping is not publish-ready"]),
+            "evidence": ["state/operator-responses.jsonl", "state/github/operations.jsonl"],
+            "next_action": "운영자가 게시할 child operation을 승인한다.",
+            "parent_operation": "GH-002",
+            "created_from_decision": response.get("decision_id"),
+        })
+        created.append(op_id)
+    if created:
+        for row in rows:
+            if row.get("id") == "GH-002":
+                row["status"] = "blocked"
+                row["lane"] = "blocked"
+                row["next_action"] = "분할 승인에 따라 child operation 후보를 검토한다."
+        write_rows(path, rows)
+        append_sync(root, {
+            "id": "GHSYNC-GH-002-SPLIT",
+            "timestamp": timestamp,
+            "summary": "GH-002 split into child operation candidates",
+            "operations": created,
+            "result": "local operation split only; no remote GitHub write performed.",
+            "evidence": ["state/operator-responses.jsonl", "scripts/apply-operator-decisions"],
+        })
+    return created
+
+
+def apply_response(root: Path, response: dict, decisions: list[dict], timestamp: str) -> tuple[str, list[str]]:
+    decision = next((row for row in decisions if row.get("id") == response.get("decision_id")), None)
+    if not decision:
+        return "blocked", ["decision not found"]
+    option = find_option(decision, response.get("option_id", ""))
+    if not option:
+        return "blocked", ["option not found"]
+    if option.get("approval_scope") != response.get("approval_scope"):
+        return "blocked", ["scope mismatch"]
+
+    evidence: list[str] = []
+    scope = response.get("approval_scope")
+    if scope in EXTERNAL_SCOPES:
+        if scope == "publish_issue":
+            changed = record_publish_approval(root, response, timestamp)
+            evidence.append("publish approval recorded" if changed else "no matching GitHub operation")
+        else:
+            evidence.append(f"{scope} acknowledged but not executed by local apply")
+    elif scope == "local_apply":
+        created = split_operation(root, response, timestamp)
+        evidence.append(f"created child operations: {', '.join(created)}" if created else "local decision recorded")
+    elif scope in {"draft_only", "prepare_only"}:
+        evidence.append(f"{scope} recorded without external write")
+    else:
+        return "blocked", [f"unsupported scope: {scope}"]
+
+    decision["status"] = "applied"
+    decision["applied_at"] = timestamp
+    decision["applied_response_id"] = response.get("id")
+    return "applied", evidence
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    decisions_path = root / "state" / "operator-decisions.jsonl"
+    responses_path = root / "state" / "operator-responses.jsonl"
+    decisions = load_rows(decisions_path)
+    responses = load_rows(responses_path)
+    timestamp = datetime.now(timezone.utc).isoformat()
+    changed = 0
+
+    for response in responses:
+        if response.get("status") != "pending":
+            continue
+        status, evidence = apply_response(root, response, decisions, timestamp)
+        response["status"] = status
+        response["applied_at"] = timestamp if status == "applied" else ""
+        response["apply_evidence"] = evidence
+        changed += 1
+
+    write_rows(decisions_path, decisions)
+    write_rows(responses_path, responses)
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
+    print(f"applied operator decisions: {changed}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

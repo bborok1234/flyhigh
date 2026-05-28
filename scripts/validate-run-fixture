@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        result = subprocess.run(
+            [str(root / "scripts" / "create-run"), "Fixture run artifact", "--repo", str(repo), "--skill", "flyhigh-qa"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            print(result.stdout)
+            print(result.stderr)
+            return result.returncode
+        run_dir = result.stdout.strip().splitlines()[-1]
+        return subprocess.run([str(root / "scripts" / "validate-run"), run_dir], check=False).returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+DOMAIN_TERMS = [
+    "fin" + "ance",
+    "invest" + "ment",
+    "trad" + "ing",
+    "port" + "folio",
+    "sto" + "ck",
+    "sig" + "nal",
+]
+
+
+CHECKS = [
+    ("spec", ["scripts/validate-spec"]),
+    ("plugin", ["scripts/validate-plugin"]),
+    ("active skills", ["scripts/validate-skills"]),
+    ("decisions", ["scripts/validate-decisions"]),
+    ("dashboard state", ["scripts/validate-dashboard-state"]),
+    ("github repositories", ["scripts/validate-github-repositories"]),
+    ("github ops", ["scripts/validate-github-ops"]),
+    ("operator decisions", ["scripts/validate-operator-decisions"]),
+    ("hitl governance", ["scripts/validate-hitl-governance"]),
+    ("direction reviews", ["scripts/validate-direction-reviews"]),
+    ("merge gates", ["scripts/validate-merge-gates"]),
+    ("dashboard quality", ["scripts/validate-dashboard-quality"]),
+    ("skillopt fixture", ["scripts/validate-skillopt-fixture"]),
+    ("skillopt", ["scripts/validate-skillopt"]),
+    ("policy", ["scripts/validate-policy"]),
+    ("surfaces", ["scripts/validate-surfaces"]),
+    ("eval suites", ["scripts/validate-evals"]),
+    ("installation", ["scripts/validate-installation"]),
+    ("dashboard", ["scripts/render-dashboard"]),
+]
+
+REQUIRED_FILES = [
+    "spec/flyhigh.schema.json",
+    "spec/harness-spec.json",
+    "scripts/validate-spec",
+    "scripts/record-decision",
+    "scripts/list-decisions",
+    "scripts/validate-decisions",
+    "scripts/create-issue",
+    "scripts/update-issue",
+    "scripts/list-issues",
+    "scripts/record-iteration",
+    "scripts/validate-dashboard-state",
+    "scripts/harness-loop",
+    "scripts/propose-github-operation",
+    "scripts/approve-github-operation",
+    "scripts/prepare-github-outbox",
+    "scripts/list-github-operations",
+    "scripts/list-github-repositories",
+    "scripts/publish-github-operation",
+    "scripts/validate-github-repositories",
+    "scripts/validate-github-ops",
+    "scripts/list-operator-decisions",
+    "scripts/decide",
+    "scripts/list-operator-responses",
+    "scripts/apply-operator-decisions",
+    "scripts/validate-operator-decisions",
+    "scripts/validate-hitl-governance",
+    "scripts/repo-resolver.py",
+    "scripts/review-direction",
+    "scripts/validate-direction-reviews",
+    "scripts/evaluate-merge-gate",
+    "scripts/validate-merge-gates",
+    "scripts/merge-approved-pr",
+    "state/decisions.jsonl",
+    "state/operator-decisions.jsonl",
+    "state/operator-responses.jsonl",
+    "state/issues.jsonl",
+    "state/iterations.jsonl",
+    "state/github/operations.jsonl",
+    "state/github/repositories.json",
+    "state/github/merge-gates.jsonl",
+    "state/github/sync-log.jsonl",
+    "state/reviews/direction-reviews.jsonl",
+    "state/full-status.json",
+    "dashboard/flyhigh.html",
+    "scripts/render-dashboard",
+    "scripts/validate-dashboard-quality",
+    "skills/active",
+    "skills/staging",
+    "skills/archive",
+    "state/skillopt/rejected-edits.jsonl",
+    "state/skillopt/promotions.jsonl",
+    "scripts/init-skill-cycle",
+    "scripts/propose-skill-edit",
+    "scripts/apply-skill-patch",
+    "scripts/score-skill-candidate",
+    "scripts/promote-skill",
+    "scripts/reject-skill-edit",
+    "scripts/validate-skillopt",
+    "evals/suites",
+    "scripts/run-eval-suite",
+    "scripts/compare-eval-runs",
+    "scripts/validate-evals",
+    "scripts/generate-codex-surface",
+    "scripts/generate-claude-surface",
+    "scripts/generate-opencode-surface",
+    "scripts/validate-surfaces",
+    "adapters/codex/AGENTS.md",
+    "adapters/claude/CLAUDE.md",
+    "adapters/opencode/AGENTS.md",
+    "policies/default-policy.json",
+    "scripts/check-policy",
+    "scripts/explain-policy",
+    "scripts/validate-policy",
+    "scripts/install-into-project",
+    "scripts/audit-project",
+    "scripts/validate-installation",
+    "examples/" + "my" + "bro" + "ker-readiness",
+    "docs/skillopt-engine.md",
+    "docs/dashboard.md",
+    "docs/decision-memory.md",
+    "docs/policy-system.md",
+    "docs/eval-program.md",
+    "docs/adapter-system.md",
+    "docs/domain-projects.md",
+    "docs/github-operations.md",
+    "docs/github-operations-research.md",
+    "docs/merge-governance-research.md",
+    "docs/decision-console.md",
+    "docs/dashboard-design-system.md",
+]
+
+
+def run(root: Path, command: list[str]) -> dict:
+    result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    return {"command": " ".join(command), "returncode": result.returncode, "output": result.stdout.strip()}
+
+
+def scan_domain_terms(root: Path) -> list[str]:
+    hits: list[str] = []
+    ignored_parts = {".git"}
+    ignored_prefixes = {"evals/reports"}
+    for path in root.rglob("*"):
+        if any(part in ignored_parts for part in path.parts):
+            continue
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root).as_posix()
+        if any(relative.startswith(prefix) for prefix in ignored_prefixes):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        lowered = text.lower()
+        for term in DOMAIN_TERMS:
+            if term in lowered:
+                hits.append(f"{relative}:{term}")
+    return hits
+
+
+def validate_dashboard(root: Path) -> list[str]:
+    html = (root / "dashboard" / "flyhigh.html").read_text(encoding="utf-8") if (root / "dashboard" / "flyhigh.html").exists() else ""
+    required = ["운영 브리핑", "Decision Console", "추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
+    return [f"dashboard missing phrase: {phrase}" for phrase in required if phrase not in html]
+
+
+def validate_docs(root: Path) -> list[str]:
+    errors = []
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    for phrase in ["scripts/validate-full-harness", "scripts/render-dashboard", "scripts/record-decision", "scripts/promote-skill", "scripts/install-into-project", "scripts/validate-github-ops", "scripts/validate-github-repositories", "scripts/validate-operator-decisions", "scripts/validate-hitl-governance", "scripts/validate-direction-reviews", "scripts/validate-merge-gates", "scripts/validate-dashboard-quality"]:
+        if phrase not in readme:
+            errors.append(f"README missing {phrase}")
+    return errors
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    failures: list[str] = []
+    results = []
+    for name, command in CHECKS:
+        result = run(root, command)
+        results.append({"name": name, **result})
+        print(f"{name}: {'pass' if result['returncode'] == 0 else 'fail'}")
+        if result["returncode"] != 0:
+            failures.append(name)
+
+    missing = [path for path in REQUIRED_FILES if not (root / path).exists()]
+    for path in missing:
+        print(f"missing {path}", file=sys.stderr)
+    if missing:
+        failures.append("required files")
+
+    for error in validate_dashboard(root):
+        print(error, file=sys.stderr)
+        failures.append("dashboard content")
+    for error in validate_docs(root):
+        print(error, file=sys.stderr)
+        failures.append("docs")
+
+    domain_hits = scan_domain_terms(root)
+    for hit in domain_hits:
+        print(f"domain term hit: {hit}", file=sys.stderr)
+    if domain_hits:
+        failures.append("domain neutrality")
+    else:
+        print("domain neutrality: pass")
+
+    report = root / "evals" / "reports" / "full-harness-validation.json"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(json.dumps({"failures": failures, "results": results}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"wrote {report.relative_to(root)}")
+    if failures:
+        print(f"validate-full-harness failed: {', '.join(sorted(set(failures)))}", file=sys.stderr)
+        return 1
+    print("validate-full-harness ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+def jsonl_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    count = 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            json.loads(line)
+            count += 1
+    return count
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    errors: list[str] = []
+    for path in ["skills/active", "skills/staging", "skills/archive", "state/skillopt/runs"]:
+        if not (root / path).exists():
+            errors.append(f"missing {path}")
+    active_skills = sorted((root / "skills" / "active").glob("*/SKILL.md"))
+    if not active_skills:
+        errors.append("no active skills")
+    for path in ["state/skillopt/rejected-edits.jsonl", "state/skillopt/promotions.jsonl"]:
+        if jsonl_count(root / path) == 0:
+            errors.append(f"no records in {path}")
+    staged_patches = list((root / "skills" / "staging").glob("*/patch.json"))
+    for patch_path in staged_patches:
+        patch = json.loads(patch_path.read_text(encoding="utf-8"))
+        for key in ["id", "skill", "operation", "target", "replacement", "evidence", "expected_score_delta", "status"]:
+            if key not in patch:
+                errors.append(f"{patch_path} missing {key}")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"skillopt ok ({len(active_skills)} active skills, {len(staged_patches)} staged candidates)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

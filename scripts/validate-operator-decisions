@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED = [
+    "id",
+    "timestamp",
+    "source_id",
+    "title",
+    "question",
+    "recommendation",
+    "recommendation_label",
+    "rationale",
+    "options",
+    "risk",
+    "evidence",
+    "status",
+    "owner",
+    "execution_path",
+    "decision_type",
+    "autonomy_level",
+    "approval_scope",
+    "reversibility",
+    "risk_level",
+    "apply_gate",
+    "valid_until_context_changes",
+    "copy_command",
+]
+AUTONOMY_LEVELS = {"auto", "recommend_then_apply", "explicit_approval_required"}
+SCOPES = {"draft_only", "prepare_only", "local_apply", "publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}
+REVERSIBILITY = {"reversible", "partially_reversible", "irreversible"}
+RISK_LEVELS = {"low", "medium", "high"}
+EXPLICIT_SCOPES = {"publish_issue", "open_pr", "merge_pr", "delete_or_reset", "spend_or_call"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    rows = load_jsonl(root / "state" / "operator-decisions.jsonl")
+    errors: list[str] = []
+    if not rows:
+        errors.append("no operator decisions recorded")
+    live_rows = [row for row in rows if row.get("status") in {"open", "answered", "applied"}]
+    if not live_rows:
+        errors.append("no operator decision lifecycle rows")
+    for row in rows:
+        for key in REQUIRED:
+            if key not in row:
+                errors.append(f"{row.get('id')} missing {key}")
+        options = row.get("options", [])
+        if len(options) < 2:
+            errors.append(f"{row.get('id')} needs at least two options")
+        option_ids = {option.get("id") for option in options}
+        if row.get("recommendation") not in option_ids:
+            errors.append(f"{row.get('id')} recommendation is not one of the options")
+        if row.get("autonomy_level") not in AUTONOMY_LEVELS:
+            errors.append(f"{row.get('id')} invalid autonomy_level")
+        if row.get("approval_scope") not in SCOPES:
+            errors.append(f"{row.get('id')} invalid approval_scope")
+        if row.get("reversibility") not in REVERSIBILITY:
+            errors.append(f"{row.get('id')} invalid reversibility")
+        if row.get("risk_level") not in RISK_LEVELS:
+            errors.append(f"{row.get('id')} invalid risk_level")
+        if row.get("approval_scope") in EXPLICIT_SCOPES and row.get("autonomy_level") != "explicit_approval_required":
+            errors.append(f"{row.get('id')} external scope without explicit approval")
+        if not row.get("valid_until_context_changes"):
+            errors.append(f"{row.get('id')} missing stale-context guard")
+        for option in options:
+            for key in ["id", "label", "approval_scope", "impact", "follow_up"]:
+                if not option.get(key):
+                    errors.append(f"{row.get('id')} option missing {key}")
+            if option.get("approval_scope") not in SCOPES:
+                errors.append(f"{row.get('id')} option invalid approval_scope")
+        if len(row.get("rationale", "")) < 40:
+            errors.append(f"{row.get('id')} rationale too thin")
+        if len(row.get("risk", "")) < 20:
+            errors.append(f"{row.get('id')} risk too thin")
+        if not row.get("evidence"):
+            errors.append(f"{row.get('id')} missing evidence")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    open_count = sum(1 for row in rows if row.get("status") == "open")
+    applied_count = sum(1 for row in rows if row.get("status") == "applied")
+    print(f"operator decisions ok ({len(rows)} decisions, {open_count} open, {applied_count} applied)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

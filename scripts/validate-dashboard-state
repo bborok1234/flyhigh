@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED_ISSUE = ["id", "timestamp", "title", "why", "status", "lane", "priority", "evidence", "next_action"]
+REQUIRED_ITERATION = ["id", "timestamp", "goal", "summary", "issues", "validation", "status"]
+REQUIRED_GITHUB_OPERATION = ["id", "timestamp", "kind", "target_repo", "title", "why", "body", "labels", "linked_items", "status", "lane", "approval_required", "evidence", "next_action"]
+REQUIRED_OPERATOR_DECISION = ["id", "timestamp", "source_id", "title", "question", "recommendation", "recommendation_label", "rationale", "options", "risk", "evidence", "status", "owner", "execution_path", "decision_type", "autonomy_level", "approval_scope", "reversibility", "risk_level", "apply_gate", "valid_until_context_changes", "copy_command"]
+LANES = {"todo", "doing", "review", "done"}
+GITHUB_LANES = {"needs_approval", "approved", "prepared", "published", "blocked"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    errors: list[str] = []
+    issues = load_jsonl(root / "state" / "issues.jsonl")
+    iterations = load_jsonl(root / "state" / "iterations.jsonl")
+    github_ops = load_jsonl(root / "state" / "github" / "operations.jsonl")
+    operator_decisions = load_jsonl(root / "state" / "operator-decisions.jsonl")
+    if not issues:
+        errors.append("no issues recorded")
+    if not iterations:
+        errors.append("no iterations recorded")
+    if not github_ops:
+        errors.append("no github operations recorded")
+    if not operator_decisions:
+        errors.append("no operator decisions recorded")
+    if not [row for row in operator_decisions if row.get("status") in {"open", "answered", "applied"}]:
+        errors.append("no operator decision lifecycle rows")
+    lanes = {issue.get("lane") for issue in issues}
+    for lane in LANES:
+        if lane not in lanes:
+            errors.append(f"kanban lane has no issue: {lane}")
+    for issue in issues:
+        for key in REQUIRED_ISSUE:
+            if key not in issue:
+                errors.append(f"{issue.get('id')} missing {key}")
+        if issue.get("lane") not in LANES:
+            errors.append(f"{issue.get('id')} invalid lane {issue.get('lane')}")
+    for iteration in iterations:
+        for key in REQUIRED_ITERATION:
+            if key not in iteration:
+                errors.append(f"{iteration.get('id')} missing {key}")
+    for row in github_ops:
+        for key in REQUIRED_GITHUB_OPERATION:
+            if key not in row:
+                errors.append(f"{row.get('id')} missing {key}")
+        if row.get("lane") not in GITHUB_LANES:
+            errors.append(f"{row.get('id')} invalid github lane {row.get('lane')}")
+    for row in operator_decisions:
+        for key in REQUIRED_OPERATOR_DECISION:
+            if key not in row:
+                errors.append(f"{row.get('id')} missing {key}")
+        options = row.get("options", [])
+        option_ids = {option.get("id") for option in options}
+        if len(options) < 2:
+            errors.append(f"{row.get('id')} needs at least two options")
+        if row.get("recommendation") not in option_ids:
+            errors.append(f"{row.get('id')} recommendation is not one of the options")
+        for option in options:
+            for key in ["id", "label", "approval_scope", "impact", "follow_up"]:
+                if not option.get(key):
+                    errors.append(f"{row.get('id')} option missing {key}")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"dashboard state ok ({len(issues)} issues, {len(iterations)} iterations, {len(github_ops)} github operations, {len(operator_decisions)} operator decisions)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

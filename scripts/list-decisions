@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+import json
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    path = root / "state" / "decisions.jsonl"
+    if not path.exists():
+        print("no decisions")
+        return 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        print(f"{item['id']} [{item['status']}] {item['title']}")
+        print(f"  결정: {item['decision']}")
+        print(f"  이유: {item['rationale']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

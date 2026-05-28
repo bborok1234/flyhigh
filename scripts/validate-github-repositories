@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED_REPO = [
+    "id",
+    "role",
+    "display_name",
+    "local_path",
+    "branch",
+    "remote_name",
+    "remote_url",
+    "remote_configured",
+    "publish_ready",
+    "publish_blockers",
+    "evidence",
+]
+REQUIRED_AUTH = ["provider", "authenticated", "account", "git_protocol", "checked_by", "remote_write_performed"]
+
+
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    data = load_json(root / "state" / "github" / "repositories.json")
+    errors: list[str] = []
+    if not data:
+        errors.append("missing state/github/repositories.json")
+    auth = data.get("auth", {})
+    for key in REQUIRED_AUTH:
+        if key not in auth:
+            errors.append(f"auth missing {key}")
+    if auth.get("remote_write_performed"):
+        errors.append("repository inspection must not perform remote writes")
+    repos = data.get("repositories", [])
+    if not repos:
+        errors.append("no repositories mapped")
+    repo_ids = [repo.get("id") for repo in repos]
+    if len(repo_ids) != len(set(repo_ids)):
+        errors.append("duplicate repository ids")
+    for repo in repos:
+        for key in REQUIRED_REPO:
+            if key not in repo:
+                errors.append(f"{repo.get('id')} missing {key}")
+        if repo.get("remote_configured") and not repo.get("remote_url"):
+            errors.append(f"{repo.get('id')} remote_configured without remote_url")
+        if repo.get("publish_ready") and not repo.get("remote_configured"):
+            errors.append(f"{repo.get('id')} publish_ready without remote_configured")
+        if repo.get("publish_ready") and repo.get("publish_blockers"):
+            errors.append(f"{repo.get('id')} publish_ready with blockers")
+        if not repo.get("publish_ready") and not repo.get("publish_blockers"):
+            errors.append(f"{repo.get('id')} blocked publish readiness without blockers")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"github repositories ok ({len(repos)} repositories, auth={'yes' if auth.get('authenticated') else 'no'})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

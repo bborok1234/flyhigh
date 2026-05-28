@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    manifest_path = root / ".codex-plugin" / "plugin.json"
+    if not manifest_path.exists():
+        print("missing .codex-plugin/plugin.json", file=sys.stderr)
+        return 1
+
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except json.JSONDecodeError as exc:
+        print(f"invalid JSON: {exc}", file=sys.stderr)
+        return 1
+
+    required = ["name", "version", "description"]
+    missing = [key for key in required if not manifest.get(key)]
+    if missing:
+        print(f"missing required fields: {', '.join(missing)}", file=sys.stderr)
+        return 1
+
+    if manifest["name"] != "flyhigh":
+        print("plugin name must be flyhigh", file=sys.stderr)
+        return 1
+
+    author = manifest.get("author", {})
+    if not isinstance(author, dict) or not author.get("name"):
+        print("author.name is required", file=sys.stderr)
+        return 1
+
+    skills = manifest.get("skills")
+    if skills != "./skills/":
+        print("skills must be ./skills/", file=sys.stderr)
+        return 1
+
+    interface = manifest.get("interface", {})
+    required_interface = [
+        "displayName",
+        "shortDescription",
+        "longDescription",
+        "developerName",
+        "category",
+        "capabilities",
+        "defaultPrompt",
+        "brandColor",
+    ]
+    missing_interface = [key for key in required_interface if not interface.get(key)]
+    if missing_interface:
+        print(f"missing interface fields: {', '.join(missing_interface)}", file=sys.stderr)
+        return 1
+
+    unsupported = [key for key in ["hooks"] if key in manifest]
+    if unsupported:
+        print(f"unsupported fields present: {', '.join(unsupported)}", file=sys.stderr)
+        return 1
+
+    print("plugin manifest ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

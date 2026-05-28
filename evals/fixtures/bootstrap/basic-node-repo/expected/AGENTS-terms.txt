@@ -1,0 +1,11 @@
+JavaScript/TypeScript
+React
+Vite
+TypeScript
+pnpm dev
+pnpm test
+pnpm build
+pnpm lint
+pnpm typecheck
+src
+

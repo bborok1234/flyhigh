@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+SUITES = {
+    "bootstrap": ["scripts/validate-bootstrap-fixture"],
+    "run-artifact": ["scripts/validate-run-fixture"],
+    "policy": ["scripts/validate-policy-fixture"],
+    "skills": ["scripts/validate-skills"],
+    "decision-memory": ["scripts/validate-decisions"],
+    "dashboard": ["scripts/render-dashboard"],
+    "skillopt": ["scripts/validate-skillopt-fixture"],
+    "adapters": ["scripts/validate-surfaces"],
+    "github-repositories": ["scripts/validate-github-repositories"],
+    "github-ops": ["scripts/validate-github-ops"],
+    "operator-decisions": ["scripts/validate-operator-decisions"],
+    "hitl-governance": ["scripts/validate-hitl-governance"],
+    "direction-reviews": ["scripts/validate-direction-reviews"],
+    "merge-gates": ["scripts/validate-merge-gates"],
+}
+
+
+def run(root: Path, command: list[str]) -> dict:
+    result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    return {"command": " ".join(command), "returncode": result.returncode, "output": result.stdout.strip()}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Run Flyhigh eval suite.")
+    parser.add_argument("suite", nargs="?", default="all", choices=["all"] + sorted(SUITES))
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    selected = SUITES if args.suite == "all" else {args.suite: SUITES[args.suite]}
+    report = {"timestamp": datetime.now(timezone.utc).isoformat(), "suite": args.suite, "results": [], "passed": True}
+    for name, command in selected.items():
+        result = run(root, command)
+        passed = result["returncode"] == 0
+        report["results"].append({"suite": name, "case": "default", "score": 1.0 if passed else 0.0, "passed": passed, "evidence": [result["command"]], "output": result["output"]})
+        if not passed:
+            report["passed"] = False
+    out = root / "evals" / "reports" / f"{args.suite}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"eval-suite {args.suite}: {'pass' if report['passed'] else 'fail'}")
+    print(out.relative_to(root))
+    return 0 if report["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

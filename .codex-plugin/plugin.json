@@ -1,0 +1,34 @@
+{
+  "name": "flyhigh",
+  "version": "0.1.0",
+  "description": "Personal Codex-first engineering harness with reusable skills, templates, validation scripts, memory conventions, and workflow contracts.",
+  "author": {
+    "name": "Personal"
+  },
+  "license": "MIT",
+  "homepage": "https://example.com/flyhigh",
+  "keywords": [
+    "codex",
+    "skills",
+    "engineering",
+    "harness"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Flyhigh",
+    "shortDescription": "Personal Codex-first engineering harness.",
+    "longDescription": "Reusable skills, templates, references, and validation helpers for consistent large-codebase engineering with Codex-first agents.",
+    "developerName": "Personal",
+    "category": "Productivity",
+    "capabilities": [
+      "Write",
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "$flyhigh-project-bootstrap Bootstrap this repository.",
+      "$flyhigh-review Review the current diff.",
+      "$flyhigh-qa Verify the completed work."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

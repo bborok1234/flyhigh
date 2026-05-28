@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+
+REQUIRED_PHRASES = [
+    "운영 브리핑",
+    "지금 볼 것",
+    "검증 관심",
+    "GitHub 준비",
+    "GitHub repository mapping",
+    "Direction review",
+    "Merge gates",
+    "이슈 액션",
+    "PR 액션",
+    "Blockers",
+    "게시 차단",
+    "remote 없음",
+    "Decision Console",
+    "추천",
+    "선택지",
+    "영향",
+    "승인 범위",
+    "Apply gate",
+    "에이전트에게 전달할 명령",
+    "실행 경로",
+    "지금 판단할 항목",
+    "작업 칸반",
+    "GitHub 운영 보드",
+    "최근 반복 로그",
+    "결정 메모리",
+    "Eval 결과",
+    "시스템 표면",
+    "dry-run",
+]
+
+SLOP_PHRASES = [
+    "Welcome to",
+    "best solution",
+    "Lorem ipsum",
+    "Boost your productivity",
+    "AI-powered solution",
+]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    html_path = root / "dashboard" / "flyhigh.html"
+    html = html_path.read_text(encoding="utf-8") if html_path.exists() else ""
+    errors: list[str] = []
+    for phrase in REQUIRED_PHRASES:
+        if phrase not in html:
+            errors.append(f"dashboard missing operator phrase: {phrase}")
+    for phrase in SLOP_PHRASES:
+        if phrase.lower() in html.lower():
+            errors.append(f"dashboard contains slop phrase: {phrase}")
+    if "overview-grid" not in html or "action-table" not in html:
+        errors.append("dashboard missing overview/action layout")
+    if "board-five" not in html:
+        errors.append("dashboard missing GitHub board layout")
+    for marker in ["decision-console", "decision-card", "decision-option", "recommendation", "execution-path", "governance-grid", "copy-command", "apply-gate"]:
+        if marker not in html:
+            errors.append(f"dashboard missing decision console marker: {marker}")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print("dashboard quality ok")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

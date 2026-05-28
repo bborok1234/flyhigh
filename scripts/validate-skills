@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import re
+import sys
+from pathlib import Path
+
+
+FRONTMATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
+
+
+def parse_field(block: str, field: str) -> str | None:
+    for line in block.splitlines():
+        if line.startswith(f"{field}:"):
+            return line.split(":", 1)[1].strip().strip('"')
+    return None
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    active_dir = root / "skills" / "active"
+    skills_dir = active_dir if active_dir.exists() else root / "skills"
+    errors: list[str] = []
+
+    skill_files = sorted(skills_dir.glob("*/SKILL.md"))
+    if not skill_files:
+        errors.append("no skills found")
+
+    for skill_file in skill_files:
+        text = skill_file.read_text()
+        match = FRONTMATTER.match(text)
+        if not match:
+            errors.append(f"{skill_file}: missing YAML frontmatter")
+            continue
+
+        block = match.group(1)
+        name = parse_field(block, "name")
+        description = parse_field(block, "description")
+        if not name:
+            errors.append(f"{skill_file}: missing name")
+        elif not name.startswith("flyhigh-"):
+            errors.append(f"{skill_file}: name must start with flyhigh-")
+        if not description:
+            errors.append(f"{skill_file}: missing description")
+        elif len(description) < 40:
+            errors.append(f"{skill_file}: description is too short to be actionable")
+
+        required_sections = ["## Workflow", "## Outputs", "## Stop Condition"]
+        for section in required_sections:
+            if section not in text:
+                errors.append(f"{skill_file}: missing {section}")
+
+    if errors:
+        for error in errors:
+            print(error, file=sys.stderr)
+        return 1
+
+    print(f"skills ok ({len(skill_files)} checked)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

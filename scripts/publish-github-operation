@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import shlex
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def load_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_rows(path: Path, rows: list[dict]) -> None:
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def append_sync(root: Path, entry: dict) -> None:
+    path = root / "state" / "github" / "sync-log.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = load_rows(path)
+    rows = [row for row in rows if row.get("id") != entry.get("id")]
+    rows.append(entry)
+    write_rows(path, rows)
+
+
+def load_repository_map(root: Path) -> dict[str, dict]:
+    path = root / "state" / "github" / "repositories.json"
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {row.get("id"): row for row in data.get("repositories", [])}
+
+
+def repository_for(row: dict, repositories: dict[str, dict]) -> dict:
+    repo_id = row.get("repository_id") or row.get("target_repo")
+    repo = repositories.get(repo_id)
+    if not repo:
+        raise SystemExit(f"repository mapping not found for {row.get('id')}: {repo_id}")
+    return repo
+
+
+def command_for(row: dict, root: Path) -> list[str]:
+    body_path = root / row.get("outbox_path", "")
+    labels: list[str] = row.get("labels", [])
+    if row.get("kind") == "issue":
+        command = ["gh", "issue", "create", "--title", row["title"], "--body-file", str(body_path)]
+        for label in labels:
+            command.extend(["--label", label])
+        return command
+    if row.get("kind") == "pr":
+        command = ["gh", "pr", "create", "--title", row["title"], "--body-file", str(body_path), "--draft"]
+        for label in labels:
+            command.extend(["--label", label])
+        return command
+    raise SystemExit(f"unsupported operation kind: {row.get('kind')}")
+
+
+def display_command_for(row: dict) -> list[str]:
+    body_path = f"<flyhigh>/{row.get('outbox_path', '')}"
+    labels: list[str] = row.get("labels", [])
+    if row.get("kind") == "issue":
+        command = ["gh", "issue", "create", "--title", row["title"], "--body-file", body_path]
+        for label in labels:
+            command.extend(["--label", label])
+        return command
+    if row.get("kind") == "pr":
+        command = ["gh", "pr", "create", "--title", row["title"], "--body-file", body_path, "--draft"]
+        for label in labels:
+            command.extend(["--label", label])
+        return command
+    raise SystemExit(f"unsupported operation kind: {row.get('kind')}")
+
+
+def display_cd_for(repo: dict, row: dict) -> str:
+    local_path = repo.get("local_path") or row.get("target_repo") or "<target-project>"
+    return local_path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Publish an approved GitHub operation through gh, or print a dry-run command.")
+    parser.add_argument("id")
+    parser.add_argument("--repo", default=".", help="Repository where gh should run.")
+    parser.add_argument("--execute", action="store_true", help="Actually call gh. Requires FLYHIGH_GITHUB_EXECUTE=1.")
+    args = parser.parse_args()
+
+    root = Path(__file__).resolve().parents[1]
+    repo = Path(args.repo).resolve()
+    path = root / "state" / "github" / "operations.jsonl"
+    repositories = load_repository_map(root)
+    rows = load_rows(path)
+    for row in rows:
+        if row.get("id") != args.id:
+            continue
+        if row.get("status") not in {"approved", "prepared"}:
+            raise SystemExit(f"{args.id} is not approved/prepared: {row.get('status')}")
+        mapped_repo = repository_for(row, repositories)
+        if not row.get("outbox_path"):
+            raise SystemExit(f"{args.id} has no outbox_path; run scripts/prepare-github-outbox first")
+        if not args.execute:
+            display_command = display_command_for(row)
+            printable = " ".join(shlex.quote(part) for part in display_command)
+            dry_run = f"cd {display_cd_for(mapped_repo, row)} && {printable}"
+            row["dry_run_command"] = dry_run
+            row["dry_run_at"] = datetime.now(timezone.utc).isoformat()
+            row["publish_ready"] = bool(mapped_repo.get("publish_ready"))
+            row["publish_blockers"] = list(mapped_repo.get("publish_blockers", []))
+            row["next_action"] = "dry-run 확인 완료. 원격 게시 전 repository mapping과 publish approval을 확인한다."
+            write_rows(path, rows)
+            append_sync(root, {
+                "id": f"GHSYNC-{args.id}-DRYRUN",
+                "timestamp": row["dry_run_at"],
+                "summary": f"{args.id} dry-run publish command generated",
+                "operations": [args.id],
+                "result": "dry-run only; no remote GitHub write performed.",
+                "evidence": [row.get("outbox_path", ""), "scripts/publish-github-operation"],
+            })
+            print(f"dry-run: {dry_run}")
+            return 0
+        if os.environ.get("FLYHIGH_GITHUB_EXECUTE") != "1":
+            raise SystemExit("refusing external GitHub write without FLYHIGH_GITHUB_EXECUTE=1")
+        if row.get("publish_approval_scope") != "publish_issue" or not row.get("publish_approved_by"):
+            raise SystemExit("refusing external GitHub write without scoped publish_issue approval")
+        if not mapped_repo.get("publish_ready"):
+            blockers = ", ".join(mapped_repo.get("publish_blockers", [])) or "repository mapping is not publish-ready"
+            raise SystemExit(f"refusing external GitHub write: {blockers}")
+        command = command_for(row, root)
+        result = subprocess.run(command, cwd=repo, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+        print(result.stdout)
+        if result.returncode != 0:
+            return result.returncode
+        row["status"] = "published"
+        row["lane"] = "published"
+        row["remote_url"] = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
+        row["published_at"] = datetime.now(timezone.utc).isoformat()
+        row["next_action"] = "remote GitHub item 상태를 추적한다."
+        write_rows(path, rows)
+        return 0
+    raise SystemExit(f"operation not found: {args.id}")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

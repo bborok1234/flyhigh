@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Flyhigh Harness Spec",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "purpose",
+    "canonical_sources",
+    "schemas",
+    "workflows",
+    "adapters",
+    "validation"
+  ],
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "purpose": { "type": "string" },
+    "canonical_sources": { "type": "object" },
+    "schemas": { "type": "object" },
+    "workflows": { "type": "array", "items": { "type": "string" } },
+    "adapters": { "type": "object" },
+    "validation": { "type": "object" }
+  }
+}
+

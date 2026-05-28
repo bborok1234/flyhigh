@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+import argparse
+import hashlib
+import json
+import shutil
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
+def append_jsonl(path: Path, item: dict) -> None:
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Promote a scored skill candidate into active skills.")
+    parser.add_argument("candidate_id")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    candidate_dir = root / "skills" / "staging" / args.candidate_id
+    patch = json.loads((candidate_dir / "patch.json").read_text(encoding="utf-8"))
+    score = json.loads((candidate_dir / "score.json").read_text(encoding="utf-8"))
+    if not score.get("passed"):
+        raise SystemExit("candidate score did not pass")
+    active = root / "skills" / "active" / patch["skill"] / "SKILL.md"
+    candidate = candidate_dir / patch["skill"] / "SKILL.md"
+    archive_dir = root / "skills" / "archive" / f"{patch['skill']}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    before_hash = digest(active)
+    shutil.copyfile(active, archive_dir / "SKILL.md")
+    shutil.copyfile(candidate, active)
+    after_hash = digest(active)
+    promotion = {
+        "id": args.candidate_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "skill": patch["skill"],
+        "candidate": args.candidate_id,
+        "before_hash": before_hash,
+        "after_hash": after_hash,
+        "score_before": score["baseline_score"],
+        "score_after": score["candidate_score"],
+        "evidence": patch.get("evidence", []),
+        "status": "promoted"
+    }
+    append_jsonl(root / "state" / "skillopt" / "promotions.jsonl", promotion)
+    patch["status"] = "promoted"
+    (candidate_dir / "patch.json").write_text(json.dumps(patch, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"promoted {args.candidate_id}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

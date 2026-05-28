@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+import json
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    path = root / "state" / "github" / "repositories.json"
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"repositories": []}
+    auth = data.get("auth", {})
+    auth_text = "authenticated" if auth.get("authenticated") else "not authenticated"
+    print(f"GitHub auth: {auth_text} ({auth.get('account', 'unknown')})")
+    for repo in data.get("repositories", []):
+        ready = "ready" if repo.get("publish_ready") else "blocked"
+        remote = repo.get("remote_url") or "no remote"
+        print(f"\n{repo.get('id')} [{ready}]")
+        print(f"role: {repo.get('role')}")
+        print(f"local: {repo.get('local_path')}")
+        print(f"remote: {remote}")
+        if repo.get("publish_blockers"):
+            print("blockers:")
+            for blocker in repo.get("publish_blockers", []):
+                print(f"- {blocker}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

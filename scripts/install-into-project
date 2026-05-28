@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import subprocess
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Install Flyhigh harness scaffolding into a target project.")
+    parser.add_argument("target")
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    target = Path(args.target).resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    command = ["scripts/bootstrap-project", str(target)]
+    if args.force:
+        command.append("--force")
+    result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+    print(result.stdout)
+    if result.returncode != 0:
+        return result.returncode
+    (target / ".flyhigh" / "domain-skills").mkdir(parents=True, exist_ok=True)
+    (target / ".flyhigh" / "dashboard").mkdir(parents=True, exist_ok=True)
+    (target / "reports" / "runs").mkdir(parents=True, exist_ok=True)
+    state = {
+        "installed_from": str(root),
+        "status": "installed",
+        "notes": "Project-specific domain skills belong under .flyhigh/domain-skills, not in Flyhigh core."
+    }
+    (target / ".flyhigh" / "dashboard" / "state.json").write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    print(f"installed Flyhigh into {target}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+import subprocess
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    candidate = "fixture-rejected-qa-note"
+    staging = root / "skills" / "staging" / candidate
+    if staging.exists():
+        import shutil
+        shutil.rmtree(staging)
+    rejected = root / "state" / "skillopt" / "rejected-edits.jsonl"
+    if rejected.exists():
+        lines = []
+        for line in rejected.read_text(encoding="utf-8").splitlines():
+            if line.strip() and candidate not in line:
+                lines.append(line)
+        rejected.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    commands = [
+        ["scripts/init-skill-cycle", "--skill", "qa", "--id", "fixture-cycle", "--evidence", "evals/suites/skillopt/basic/rubric.md", "--reflection", "Evidence-free skill edits should not be promoted."],
+        ["scripts/propose-skill-edit", "--id", candidate, "--skill", "qa", "--operation", "add", "--target", "end", "--replacement", "## Candidate Note\n\nAlways be better.\n", "--evidence", "evals/suites/skillopt/basic/rubric.md", "--expected-score-delta", "-0.1"],
+        ["scripts/apply-skill-patch", candidate],
+        ["scripts/score-skill-candidate", candidate, "--baseline", "0.9", "--candidate", "0.8"],
+    ]
+    for command in commands[:-1]:
+        result = subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if result.returncode != 0:
+            print(result.stdout)
+            print(result.stderr)
+            return result.returncode
+    score = subprocess.run(commands[-1], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if score.returncode == 0:
+        print("expected scoring to reject weaker candidate")
+        print(score.stdout)
+        return 1
+    reject = subprocess.run(["scripts/reject-skill-edit", candidate, "--reason", "Candidate score regressed against baseline.", "--evidence", "skills/staging/fixture-rejected-qa-note/score.json"], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if reject.returncode != 0:
+        print(reject.stdout)
+        print(reject.stderr)
+        return reject.returncode
+    return subprocess.run(["scripts/validate-skillopt"], cwd=root, check=False).returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

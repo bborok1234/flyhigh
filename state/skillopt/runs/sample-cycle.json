@@ -1,0 +1,10 @@
+{
+  "id": "sample-cycle",
+  "timestamp": "2026-05-27",
+  "skill": "flyhigh-session-handoff",
+  "rollout_evidence": [
+    "Long-running work needs explicit validation and next action in handoff."
+  ],
+  "minibatch_reflection": "Candidate updates should add concrete evidence requirements, not generic prose.",
+  "status": "sample"
+}

@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="List or append a Flyhigh direction review.")
+    parser.add_argument("--id")
+    parser.add_argument("--scope")
+    parser.add_argument("--decision", default="continue")
+    parser.add_argument("--rationale")
+    parser.add_argument("--confidence", default="medium")
+    parser.add_argument("--status", default="accepted")
+    parser.add_argument("--evidence", action="append", default=[])
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    path = root / "state" / "reviews" / "direction-reviews.jsonl"
+    rows = load_jsonl(path)
+    if not args.id:
+        for row in rows:
+            print(f"{row.get('review_id')} {row.get('scope')} [{row.get('status')}] {row.get('decision')}")
+        return 0
+    if not args.scope or not args.rationale:
+        raise SystemExit("--scope and --rationale are required when adding a review")
+    rows = [row for row in rows if row.get("review_id") != args.id]
+    rows.append({
+        "review_id": args.id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "scope": args.scope,
+        "evidence": args.evidence,
+        "decision": args.decision,
+        "issue_actions": [],
+        "pr_actions": [],
+        "rationale": args.rationale,
+        "confidence": args.confidence,
+        "status": args.status,
+    })
+    write_jsonl(path, rows)
+    print(f"recorded {args.id}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

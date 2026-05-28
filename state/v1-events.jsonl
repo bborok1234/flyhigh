@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-27","id":"event-001","title":"v1 goal 시작","summary":"v0.2 scaffold에서 Flyhigh v1 구현을 시작했고, SSOT dashboard 요구사항을 먼저 반영했다.","evidence":["docs/flyhigh-v1-goal.md"],"status":"done"}
+{"timestamp":"2026-05-27","id":"event-002","title":"v1 구현 완료","summary":"run artifact, policy preflight, eval runner, adapter generation, dashboard rendering, v1 docs, validate-v1을 구현했다.","evidence":["scripts/validate-v1","dashboard/flyhigh-v1.html"],"status":"done"}

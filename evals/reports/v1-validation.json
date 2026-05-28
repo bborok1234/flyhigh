@@ -1,0 +1,59 @@
+{
+  "failures": [],
+  "results": [
+    {
+      "name": "plugin",
+      "command": "scripts/validate-plugin",
+      "returncode": 0,
+      "output": "plugin manifest ok"
+    },
+    {
+      "name": "skills",
+      "command": "scripts/validate-skills",
+      "returncode": 0,
+      "output": "skills ok (9 checked)"
+    },
+    {
+      "name": "bootstrap fixture",
+      "command": "scripts/validate-bootstrap-fixture",
+      "returncode": 0,
+      "output": "bootstrap fixture ok"
+    },
+    {
+      "name": "run artifact fixture",
+      "command": "scripts/validate-run-fixture",
+      "returncode": 0,
+      "output": "run artifact ok"
+    },
+    {
+      "name": "policy fixture",
+      "command": "scripts/validate-policy-fixture",
+      "returncode": 0,
+      "output": "policy fixture ok"
+    },
+    {
+      "name": "generate adapters",
+      "command": "scripts/generate-adapters",
+      "returncode": 0,
+      "output": "adapters generated"
+    },
+    {
+      "name": "adapter validation",
+      "command": "scripts/validate-adapters",
+      "returncode": 0,
+      "output": "adapters ok (9 commands)"
+    },
+    {
+      "name": "eval runner",
+      "command": "scripts/run-evals",
+      "returncode": 0,
+      "output": "evals passed: /Users/mirlim/sidejob/mybroker/flyhigh/evals/reports/latest.json\n- plugin: pass\n- skills: pass\n- bootstrap: pass\n- run-artifact: pass\n- policy: pass\n- adapters: pass"
+    },
+    {
+      "name": "dashboard render",
+      "command": "scripts/render-v1-dashboard",
+      "returncode": 0,
+      "output": "wrote dashboard/flyhigh-v1.html"
+    }
+  ]
+}

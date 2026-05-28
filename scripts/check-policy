@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+
+
+ORDER = {"allow": 0, "rationale_required": 1, "approval_required": 2, "deny": 3}
+
+
+def classify(policy: dict, kind: str, value: str) -> tuple[str, list[dict]]:
+    matches = []
+    for rule in policy["rules"]:
+        match = rule.get("match", {})
+        if match.get("kind") != kind:
+            continue
+        for pattern in match.get("patterns", []):
+            if pattern.lower() in value.lower():
+                matches.append(rule)
+    if not matches:
+        return "allow", []
+    strongest = max(matches, key=lambda rule: ORDER[rule["class"]])
+    return strongest["class"], matches
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Classify an action with Flyhigh policy.")
+    parser.add_argument("--kind", choices=["command", "file", "content"], required=True)
+    parser.add_argument("--value", required=True)
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    policy = json.loads((root / "policies" / "default-policy.json").read_text(encoding="utf-8"))
+    policy_class, matches = classify(policy, args.kind, args.value)
+    result = {"class": policy_class, "matches": matches, "value": args.value, "kind": args.kind}
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"{policy_class}: {args.kind}={args.value}")
+        for rule in matches:
+            print(f"- {rule['id']}: {rule['reason']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

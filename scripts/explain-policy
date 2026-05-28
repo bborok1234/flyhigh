@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+import argparse
+import subprocess
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Explain why policy classifies an action a certain way.")
+    parser.add_argument("--kind", choices=["command", "file", "content"], required=True)
+    parser.add_argument("--value", required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    return subprocess.run(["scripts/check-policy", "--kind", args.kind, "--value", args.value], cwd=root, check=False).returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

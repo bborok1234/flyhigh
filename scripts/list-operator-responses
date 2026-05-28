@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import json
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    path = root / "state" / "operator-responses.jsonl"
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()] if path.exists() else []
+    if not rows:
+        print("no operator responses recorded")
+        return 0
+    for row in rows:
+        print(f"\n{row.get('id')} {row.get('decision_id')} [{row.get('status')}]")
+        print(f"선택: {row.get('option_id')} ({row.get('approval_scope')})")
+        print(f"운영자: {row.get('operator')}")
+        if row.get("note"):
+            print(f"메모: {row.get('note')}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED = [
+    "id",
+    "timestamp",
+    "kind",
+    "repository_id",
+    "target_repo",
+    "title",
+    "why",
+    "body",
+    "labels",
+    "linked_items",
+    "status",
+    "lane",
+    "approval_required",
+    "publish_ready",
+    "publish_blockers",
+    "evidence",
+    "next_action",
+]
+LANES = {"needs_approval", "approved", "prepared", "published", "blocked"}
+KINDS = {"issue", "pr"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    rows = load_jsonl(root / "state" / "github" / "operations.jsonl")
+    sync = load_jsonl(root / "state" / "github" / "sync-log.jsonl")
+    repo_data = load_json(root / "state" / "github" / "repositories.json")
+    repositories = {repo.get("id"): repo for repo in repo_data.get("repositories", [])}
+    errors: list[str] = []
+    if not rows:
+        errors.append("no github operations recorded")
+    if not sync:
+        errors.append("no github sync log recorded")
+    if not repositories:
+        errors.append("no github repository mapping recorded")
+    sync_ids = [row.get("id") for row in sync]
+    if len(sync_ids) != len(set(sync_ids)):
+        errors.append("duplicate github sync ids")
+    for row in rows:
+        for key in REQUIRED:
+            if key not in row:
+                errors.append(f"{row.get('id')} missing {key}")
+        if row.get("kind") not in KINDS:
+            errors.append(f"{row.get('id')} invalid kind {row.get('kind')}")
+        repo = repositories.get(row.get("repository_id"))
+        if not repo:
+            errors.append(f"{row.get('id')} references unmapped repository {row.get('repository_id')}")
+        else:
+            if row.get("publish_ready") and not repo.get("publish_ready"):
+                errors.append(f"{row.get('id')} publish_ready despite repository blockers")
+            if row.get("publish_ready") and not repo.get("remote_configured"):
+                errors.append(f"{row.get('id')} publish_ready without remote_configured repository")
+            if not row.get("publish_ready") and not row.get("publish_blockers"):
+                errors.append(f"{row.get('id')} not publish_ready without blockers")
+        if row.get("lane") not in LANES:
+            errors.append(f"{row.get('id')} invalid lane {row.get('lane')}")
+        if row.get("status") == "published" and not row.get("remote_url"):
+            errors.append(f"{row.get('id')} published without remote_url")
+        if row.get("status") == "published" and not row.get("publish_approved_by"):
+            errors.append(f"{row.get('id')} published without scoped publish approval")
+        if row.get("publish_approved_at") and row.get("publish_approval_scope") != "publish_issue":
+            errors.append(f"{row.get('id')} invalid publish approval scope")
+        if row.get("status") in {"approved", "prepared", "published"} and not row.get("approved_by"):
+            errors.append(f"{row.get('id')} approved/prepared without approved_by")
+        if row.get("status") == "prepared" and not row.get("outbox_path"):
+            errors.append(f"{row.get('id')} prepared without outbox_path")
+        if row.get("dry_run_at") and not row.get("dry_run_command"):
+            errors.append(f"{row.get('id')} has dry_run_at without dry_run_command")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"github ops ok ({len(rows)} operations, {len(sync)} sync records)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
