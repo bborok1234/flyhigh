@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED = ["id", "timestamp", "repo_id", "pr_number", "pr_url", "linked_issues", "validation", "risk", "required_checks", "direction_review_id", "merge_decision", "merge_method", "status", "evidence"]
+STATUSES = {"approved", "blocked", "merged", "held"}
+DECISIONS = {"approved", "blocked", "hold", "merged"}
+METHODS = {"merge", "squash", "rebase"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    gates = load_jsonl(root / "state" / "github" / "merge-gates.jsonl")
+    reviews = {row.get("review_id") for row in load_jsonl(root / "state" / "reviews" / "direction-reviews.jsonl")}
+    errors: list[str] = []
+    if not gates:
+        errors.append("no merge gates recorded")
+    ids = [row.get("id") for row in gates]
+    if len(ids) != len(set(ids)):
+        errors.append("duplicate merge gate ids")
+    for gate in gates:
+        for key in REQUIRED:
+            if key not in gate:
+                errors.append(f"{gate.get('id')} missing {key}")
+        if gate.get("status") not in STATUSES:
+            errors.append(f"{gate.get('id')} invalid status {gate.get('status')}")
+        if gate.get("merge_decision") not in DECISIONS:
+            errors.append(f"{gate.get('id')} invalid merge_decision {gate.get('merge_decision')}")
+        if gate.get("merge_method") not in METHODS:
+            errors.append(f"{gate.get('id')} invalid merge_method {gate.get('merge_method')}")
+        if gate.get("direction_review_id") not in reviews:
+            errors.append(f"{gate.get('id')} references missing direction review")
+        if not gate.get("linked_issues"):
+            errors.append(f"{gate.get('id')} missing linked issues")
+        if not gate.get("validation"):
+            errors.append(f"{gate.get('id')} missing validation")
+        if len(gate.get("risk", "")) < 40:
+            errors.append(f"{gate.get('id')} risk too thin")
+        if gate.get("status") == "merged" and not gate.get("merged_at"):
+            errors.append(f"{gate.get('id')} merged without merged_at")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"merge gates ok ({len(gates)} gates)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -7,6 +7,7 @@
     "decision_memory": "state/decisions.jsonl",
     "operator_decisions": "state/operator-decisions.jsonl",
     "operator_responses": "state/operator-responses.jsonl",
+    "direction_reviews": "state/reviews/direction-reviews.jsonl",
     "policy": "policies/default-policy.json",
     "skillopt": "state/skillopt",
     "dashboard_state": "state/full-status.json",
@@ -14,6 +15,7 @@
     "iterations": "state/iterations.jsonl",
     "github_operations": "state/github/operations.jsonl",
     "github_repositories": "state/github/repositories.json",
+    "github_merge_gates": "state/github/merge-gates.jsonl",
     "github_sync_log": "state/github/sync-log.jsonl"
   },
   "schemas": {
@@ -117,6 +119,30 @@
       "risk_level",
       "reversibility",
       "source_command"
+    ],
+    "direction_review_required_fields": [
+      "review_id",
+      "scope",
+      "evidence",
+      "decision",
+      "issue_actions",
+      "pr_actions",
+      "rationale",
+      "confidence",
+      "status"
+    ],
+    "merge_gate_required_fields": [
+      "id",
+      "repo_id",
+      "pr_number",
+      "linked_issues",
+      "validation",
+      "risk",
+      "required_checks",
+      "direction_review_id",
+      "merge_decision",
+      "merge_method",
+      "status"
     ]
   },
   "workflows": [
@@ -157,6 +183,8 @@
     "github_repositories": "scripts/validate-github-repositories",
     "github_operations": "scripts/validate-github-ops",
     "operator_decisions": "scripts/validate-operator-decisions",
-    "hitl_governance": "scripts/validate-hitl-governance"
+    "hitl_governance": "scripts/validate-hitl-governance",
+    "direction_reviews": "scripts/validate-direction-reviews",
+    "merge_gates": "scripts/validate-merge-gates"
   }
 }

@@ -13,6 +13,8 @@ The dashboard is generated from structured state:
 - `state/issues.jsonl`
 - `state/iterations.jsonl`
 - `state/github/repositories.json`
+- `state/github/merge-gates.jsonl`
+- `state/reviews/direction-reviews.jsonl`
 - `state/skillopt/*`
 - `evals/reports/*`
 - `policies/default-policy.json`

@@ -17,8 +17,9 @@ Flyhigh dashboard is an operator surface, not a report dump.
 4. 지금 판단할 항목: only actionable rows.
 5. Work and GitHub boards.
 6. GitHub repository mapping: auth, local path strategy, remote URL, publish readiness, blockers.
-7. Recent iterations and decisions.
-8. Eval/system evidence.
+7. Direction review and merge gates: issue actions, PR actions, validation, blockers, merge readiness.
+8. Recent iterations and decisions.
+9. Eval/system evidence.
 
 ## Visual System
 
@@ -35,4 +36,5 @@ Flyhigh dashboard is an operator surface, not a report dump.
 - Completed items are summarized, not allowed to dominate the first scan.
 - Dry-run and approval evidence must be visible without reading raw JSON.
 - GitHub publish readiness must show auth, mapped repo, remote, and blockers before any execute path.
+- Merge readiness must show direction review, issue lifecycle decisions, validation evidence, and blockers before landing.
 - Generic descriptions such as "best solution" or "improve productivity" are prohibited.

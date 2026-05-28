@@ -40,6 +40,12 @@ The default publish path is dry-run only.
 
 Approval is scoped. Approval for proposal, outbox preparation, or dry-run does not imply publish approval.
 
+Merges use a separate governance path:
+
+- `state/reviews/direction-reviews.jsonl` records whether to continue, split, close, defer, or create work.
+- `state/github/merge-gates.jsonl` records PR readiness, validation, risk, blockers, and merge decision.
+- `scripts/merge-approved-pr` merges only after `scripts/evaluate-merge-gate` passes.
+
 ## Commands
 
 ```bash
@@ -53,6 +59,9 @@ scripts/list-github-operations
 scripts/list-github-repositories
 scripts/validate-github-repositories
 scripts/validate-github-ops
+scripts/review-direction
+scripts/evaluate-merge-gate
+scripts/merge-approved-pr MG-001
 ```
 
 Dry-run publish records `dry_run_command` and `dry_run_at` back into `state/github/operations.jsonl`, and appends a sync record. This keeps operator-visible evidence even when no remote GitHub write is performed.

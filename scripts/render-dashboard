@@ -361,6 +361,47 @@ def github_repository_panel(repositories: dict[str, Any]) -> str:
     )
 
 
+def direction_review_panel(reviews: list[dict[str, Any]]) -> str:
+    if not reviews:
+        return "<p class='empty'>방향 리뷰 기록 없음</p>"
+    rows = []
+    for review in latest(reviews, 4):
+        issue_actions = ", ".join(f"{item.get('issue_id')}:{item.get('action')}" for item in review.get("issue_actions", []))
+        pr_actions = ", ".join(f"{item.get('repo_id')}#{item.get('pr_number')}:{item.get('action')}" for item in review.get("pr_actions", []))
+        rows.append(
+            "<article class='timeline-item direction-review'>"
+            f"<div><strong>{esc(review.get('review_id', ''))}</strong><span>{esc(review.get('status', ''))} · {esc(review.get('confidence', ''))}</span></div>"
+            f"<h3>{esc(review.get('scope', ''))}</h3>"
+            f"<p><strong>결정</strong> {esc(review.get('decision', ''))}</p>"
+            f"<p><strong>이슈 액션</strong> {esc(issue_actions)}</p>"
+            f"<p><strong>PR 액션</strong> {esc(pr_actions)}</p>"
+            f"<p>{esc(review.get('rationale', ''))}</p>"
+            f"<details><summary>근거</summary>{evidence_list(review.get('evidence', []))}</details>"
+            "</article>"
+        )
+    return "<div class='timeline'>" + "".join(rows) + "</div>"
+
+
+def merge_gate_panel(gates: list[dict[str, Any]]) -> str:
+    if not gates:
+        return "<p class='empty'>Merge gate 기록 없음</p>"
+    rows = []
+    for gate in gates:
+        state = gate.get("status", "")
+        tone = "ok" if state == "merged" or gate.get("gate_status") == "passed" else "warn" if gate.get("blockers") else "neutral"
+        blockers = ", ".join(gate.get("blockers", [])) or "없음"
+        rows.append(
+            "<tr>"
+            f"<td><strong>{esc(gate.get('id', ''))}</strong><span>{esc(gate.get('repo_id', ''))}#{esc(gate.get('pr_number', ''))}</span></td>"
+            f"<td>{pill(state, tone)}<span>{esc(gate.get('gate_status', 'not evaluated'))}</span></td>"
+            f"<td>{esc(gate.get('direction_review_id', ''))}</td>"
+            f"<td>{esc('; '.join(gate.get('validation', [])))}</td>"
+            f"<td>{esc(blockers)}</td>"
+            "</tr>"
+        )
+    return "<table><thead><tr><th>Gate</th><th>상태</th><th>방향 리뷰</th><th>검증</th><th>Blockers</th></tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+
+
 def iteration_list(iterations: list[dict[str, Any]]) -> str:
     if not iterations:
         return "<p class='empty'>반복 기록 없음</p>"
@@ -435,6 +476,8 @@ def render(root: Path) -> str:
     github_ops = load_jsonl(root / "state" / "github" / "operations.jsonl")
     github_sync = load_jsonl(root / "state" / "github" / "sync-log.jsonl")
     github_repositories = load_json(root / "state" / "github" / "repositories.json", {})
+    direction_reviews = load_jsonl(root / "state" / "reviews" / "direction-reviews.jsonl")
+    merge_gates = load_jsonl(root / "state" / "github" / "merge-gates.jsonl")
     operator_decisions = load_jsonl(root / "state" / "operator-decisions.jsonl")
     policy = load_json(root / "policies" / "default-policy.json", {})
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -449,6 +492,10 @@ def render(root: Path) -> str:
         card("검증 상태", validation_summary(root), "완료 주장에 필요한 최신 증거"),
         "</section>",
         card("GitHub repository mapping", github_repository_panel(github_repositories), "원격 게시 전 repo, auth, remote, readiness를 확인"),
+        "<section class='split'>",
+        card("Direction review", direction_review_panel(direction_reviews), "계획 변경, 이슈 분할/보류/생성, PR 진행 판단"),
+        card("Merge gates", merge_gate_panel(merge_gates), "PR merge readiness, validation, blockers"),
+        "</section>",
         card("지금 판단할 항목", action_queue(issues, github_ops), "운영자가 확인해야 할 다음 행동만 모음"),
         card("작업 칸반", issue_board(issues), "완료 항목은 최근 3개만 노출해 현재 상태를 우선 표시"),
         card("GitHub 운영 보드", github_board(github_ops), "원격 write 없이 proposal, approval, outbox, dry-run을 추적"),

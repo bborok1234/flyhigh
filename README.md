@@ -90,6 +90,11 @@ scripts/list-operator-responses
 scripts/apply-operator-decisions
 scripts/validate-operator-decisions
 scripts/validate-hitl-governance
+scripts/review-direction
+scripts/validate-direction-reviews
+scripts/evaluate-merge-gate
+scripts/validate-merge-gates
+scripts/merge-approved-pr MG-001
 scripts/harness-loop
 ```
 
@@ -149,6 +154,7 @@ examples/           Usage examples
 - `docs/domain-projects.md`: installing Flyhigh into future projects.
 - `docs/github-operations.md`: GitHub issue/PR proposal, approval, outbox, and publish lifecycle.
 - `docs/github-operations-research.md`: references and design consequences for GitHub operations.
+- `docs/merge-governance-research.md`: direction review and merge gate rules.
 - `docs/decision-console.md`: operator-facing decision prompt model for dashboard choices.
 
 ## Run Artifacts

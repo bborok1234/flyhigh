@@ -19,6 +19,8 @@ SUITES = {
     "github-ops": ["scripts/validate-github-ops"],
     "operator-decisions": ["scripts/validate-operator-decisions"],
     "hitl-governance": ["scripts/validate-hitl-governance"],
+    "direction-reviews": ["scripts/validate-direction-reviews"],
+    "merge-gates": ["scripts/validate-merge-gates"],
 }
 
 

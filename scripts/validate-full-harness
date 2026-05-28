@@ -25,6 +25,8 @@ CHECKS = [
     ("github ops", ["scripts/validate-github-ops"]),
     ("operator decisions", ["scripts/validate-operator-decisions"]),
     ("hitl governance", ["scripts/validate-hitl-governance"]),
+    ("direction reviews", ["scripts/validate-direction-reviews"]),
+    ("merge gates", ["scripts/validate-merge-gates"]),
     ("dashboard quality", ["scripts/validate-dashboard-quality"]),
     ("skillopt fixture", ["scripts/validate-skillopt-fixture"]),
     ("skillopt", ["scripts/validate-skillopt"]),
@@ -62,6 +64,12 @@ REQUIRED_FILES = [
     "scripts/apply-operator-decisions",
     "scripts/validate-operator-decisions",
     "scripts/validate-hitl-governance",
+    "scripts/repo-resolver.py",
+    "scripts/review-direction",
+    "scripts/validate-direction-reviews",
+    "scripts/evaluate-merge-gate",
+    "scripts/validate-merge-gates",
+    "scripts/merge-approved-pr",
     "state/decisions.jsonl",
     "state/operator-decisions.jsonl",
     "state/operator-responses.jsonl",
@@ -69,7 +77,9 @@ REQUIRED_FILES = [
     "state/iterations.jsonl",
     "state/github/operations.jsonl",
     "state/github/repositories.json",
+    "state/github/merge-gates.jsonl",
     "state/github/sync-log.jsonl",
+    "state/reviews/direction-reviews.jsonl",
     "state/full-status.json",
     "dashboard/flyhigh.html",
     "scripts/render-dashboard",
@@ -114,6 +124,7 @@ REQUIRED_FILES = [
     "docs/domain-projects.md",
     "docs/github-operations.md",
     "docs/github-operations-research.md",
+    "docs/merge-governance-research.md",
     "docs/decision-console.md",
     "docs/dashboard-design-system.md",
 ]
@@ -149,14 +160,14 @@ def scan_domain_terms(root: Path) -> list[str]:
 
 def validate_dashboard(root: Path) -> list[str]:
     html = (root / "dashboard" / "flyhigh.html").read_text(encoding="utf-8") if (root / "dashboard" / "flyhigh.html").exists() else ""
-    required = ["운영 브리핑", "Decision Console", "추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로", "GitHub repository mapping", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
+    required = ["운영 브리핑", "Decision Console", "추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 차단", "remote 없음", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
     return [f"dashboard missing phrase: {phrase}" for phrase in required if phrase not in html]
 
 
 def validate_docs(root: Path) -> list[str]:
     errors = []
     readme = (root / "README.md").read_text(encoding="utf-8")
-    for phrase in ["scripts/validate-full-harness", "scripts/render-dashboard", "scripts/record-decision", "scripts/promote-skill", "scripts/install-into-project", "scripts/validate-github-ops", "scripts/validate-github-repositories", "scripts/validate-operator-decisions", "scripts/validate-hitl-governance", "scripts/validate-dashboard-quality"]:
+    for phrase in ["scripts/validate-full-harness", "scripts/render-dashboard", "scripts/record-decision", "scripts/promote-skill", "scripts/install-into-project", "scripts/validate-github-ops", "scripts/validate-github-repositories", "scripts/validate-operator-decisions", "scripts/validate-hitl-governance", "scripts/validate-direction-reviews", "scripts/validate-merge-gates", "scripts/validate-dashboard-quality"]:
         if phrase not in readme:
             errors.append(f"README missing {phrase}")
     return errors

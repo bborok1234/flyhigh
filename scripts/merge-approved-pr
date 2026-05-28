@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def resolve_repo(root: Path, repo_id: str) -> str:
+    return subprocess.check_output(["scripts/repo-resolver.py", repo_id], cwd=root, text=True).strip()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Merge a PR only when its Flyhigh merge gate passes.")
+    parser.add_argument("gate_id")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    gate_path = root / "state" / "github" / "merge-gates.jsonl"
+    gates = load_jsonl(gate_path)
+    subprocess.run(["scripts/evaluate-merge-gate", args.gate_id], cwd=root, check=True)
+    gates = load_jsonl(gate_path)
+    for gate in gates:
+        if gate.get("id") != args.gate_id:
+            continue
+        if gate.get("gate_status") != "passed":
+            raise SystemExit(f"{args.gate_id} is not passed: {gate.get('blockers', [])}")
+        if gate.get("status") == "merged":
+            print(f"{args.gate_id} already merged")
+            return 0
+        repo = resolve_repo(root, gate["repo_id"])
+        command = ["gh", "pr", "merge", str(gate["pr_number"]), "--repo", repo, "--delete-branch"]
+        if gate.get("merge_method") == "squash":
+            command.append("--squash")
+        elif gate.get("merge_method") == "rebase":
+            command.append("--rebase")
+        else:
+            command.append("--merge")
+        subprocess.run(command, cwd=root, check=True)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        gate["status"] = "merged"
+        gate["merge_decision"] = "merged"
+        gate["merged_at"] = timestamp
+        gate["merged_url"] = gate.get("pr_url", "")
+        write_jsonl(gate_path, gates)
+        print(f"merged {args.gate_id}: {gate.get('pr_url')}")
+        return 0
+    raise SystemExit(f"merge gate not found: {args.gate_id}")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+REQUIRED = ["review_id", "timestamp", "scope", "evidence", "decision", "issue_actions", "pr_actions", "rationale", "confidence", "status"]
+DECISIONS = {"continue_and_merge", "continue", "split", "close", "defer", "create_more_work", "hold"}
+STATUSES = {"draft", "accepted", "superseded", "held"}
+CONFIDENCE = {"low", "medium", "high"}
+ISSUE_ACTIONS = {"continue", "split", "close", "defer", "create"}
+PR_ACTIONS = {"merge_when_gate_passes", "hold", "revise", "close"}
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    rows = load_jsonl(root / "state" / "reviews" / "direction-reviews.jsonl")
+    errors: list[str] = []
+    if not rows:
+        errors.append("no direction reviews recorded")
+    ids = [row.get("review_id") for row in rows]
+    if len(ids) != len(set(ids)):
+        errors.append("duplicate direction review ids")
+    for row in rows:
+        for key in REQUIRED:
+            if key not in row:
+                errors.append(f"{row.get('review_id')} missing {key}")
+        if row.get("decision") not in DECISIONS:
+            errors.append(f"{row.get('review_id')} invalid decision {row.get('decision')}")
+        if row.get("status") not in STATUSES:
+            errors.append(f"{row.get('review_id')} invalid status {row.get('status')}")
+        if row.get("confidence") not in CONFIDENCE:
+            errors.append(f"{row.get('review_id')} invalid confidence {row.get('confidence')}")
+        if len(row.get("rationale", "")) < 80:
+            errors.append(f"{row.get('review_id')} rationale too thin")
+        if not row.get("evidence"):
+            errors.append(f"{row.get('review_id')} missing evidence")
+        for action in row.get("issue_actions", []):
+            if action.get("action") not in ISSUE_ACTIONS:
+                errors.append(f"{row.get('review_id')} invalid issue action {action.get('action')}")
+            if not action.get("reason"):
+                errors.append(f"{row.get('review_id')} issue action missing reason")
+        for action in row.get("pr_actions", []):
+            if action.get("action") not in PR_ACTIONS:
+                errors.append(f"{row.get('review_id')} invalid pr action {action.get('action')}")
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"direction reviews ok ({len(rows)} reviews)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

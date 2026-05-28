@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-REQUIRED = ["bootstrap", "run-artifact", "policy", "skills", "decision-memory", "dashboard", "skillopt", "adapters", "github-repositories", "github-ops", "operator-decisions", "hitl-governance"]
+REQUIRED = ["bootstrap", "run-artifact", "policy", "skills", "decision-memory", "dashboard", "skillopt", "adapters", "github-repositories", "github-ops", "operator-decisions", "hitl-governance", "direction-reviews", "merge-gates"]
 
 
 def main() -> int:
