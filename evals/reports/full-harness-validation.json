@@ -95,7 +95,7 @@
       "name": "installation",
       "command": "scripts/validate-installation",
       "returncode": 0,
-      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpznfsognn/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
+      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
     },
     {
       "name": "dashboard",
