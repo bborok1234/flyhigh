@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-28T04:08:40.517454+00:00",
+  "timestamp": "2026-05-28T04:23:57.299443+00:00",
   "suite": "all",
   "results": [
     {
@@ -100,7 +100,7 @@
       "evidence": [
         "scripts/validate-github-ops"
       ],
-      "output": "github ops ok (2 operations, 3 sync records)"
+      "output": "github ops ok (5 operations, 5 sync records)"
     },
     {
       "suite": "operator-decisions",
@@ -110,7 +110,7 @@
       "evidence": [
         "scripts/validate-operator-decisions"
       ],
-      "output": "operator decisions ok (3 decisions, 3 open)"
+      "output": "operator decisions ok (3 decisions, 0 open, 3 applied)"
     },
     {
       "suite": "hitl-governance",
@@ -120,7 +120,7 @@
       "evidence": [
         "scripts/validate-hitl-governance"
       ],
-      "output": "hitl governance ok (3 decisions, 0 responses)"
+      "output": "hitl governance ok (3 decisions, 3 responses)"
     }
   ],
   "passed": true

@@ -29,7 +29,7 @@
       "name": "dashboard state",
       "command": "scripts/validate-dashboard-state",
       "returncode": 0,
-      "output": "dashboard state ok (13 issues, 10 iterations, 2 github operations, 3 operator decisions)"
+      "output": "dashboard state ok (13 issues, 10 iterations, 5 github operations, 3 operator decisions)"
     },
     {
       "name": "github repositories",
@@ -41,19 +41,19 @@
       "name": "github ops",
       "command": "scripts/validate-github-ops",
       "returncode": 0,
-      "output": "github ops ok (2 operations, 3 sync records)"
+      "output": "github ops ok (5 operations, 5 sync records)"
     },
     {
       "name": "operator decisions",
       "command": "scripts/validate-operator-decisions",
       "returncode": 0,
-      "output": "operator decisions ok (3 decisions, 3 open)"
+      "output": "operator decisions ok (3 decisions, 0 open, 3 applied)"
     },
     {
       "name": "hitl governance",
       "command": "scripts/validate-hitl-governance",
       "returncode": 0,
-      "output": "hitl governance ok (3 decisions, 0 responses)"
+      "output": "hitl governance ok (3 decisions, 3 responses)"
     },
     {
       "name": "dashboard quality",
@@ -95,7 +95,7 @@
       "name": "installation",
       "command": "scripts/validate-installation",
       "returncode": 0,
-      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpqx7yzc7l/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
+      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpft899iqu/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpft899iqu/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpft899iqu/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpft899iqu/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
     },
     {
       "name": "dashboard",

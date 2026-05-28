@@ -47,9 +47,9 @@ def main() -> int:
     errors: list[str] = []
     if not rows:
         errors.append("no operator decisions recorded")
-    open_rows = [row for row in rows if row.get("status") == "open"]
-    if not open_rows:
-        errors.append("no open operator decision")
+    live_rows = [row for row in rows if row.get("status") in {"open", "answered", "applied"}]
+    if not live_rows:
+        errors.append("no operator decision lifecycle rows")
     for row in rows:
         for key in REQUIRED:
             if key not in row:
@@ -87,7 +87,9 @@ def main() -> int:
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1
-    print(f"operator decisions ok ({len(rows)} decisions, {len(open_rows)} open)")
+    open_count = sum(1 for row in rows if row.get("status") == "open")
+    applied_count = sum(1 for row in rows if row.get("status") == "applied")
+    print(f"operator decisions ok ({len(rows)} decisions, {open_count} open, {applied_count} applied)")
     return 0
 
 

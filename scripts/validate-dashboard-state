@@ -33,8 +33,8 @@ def main() -> int:
         errors.append("no github operations recorded")
     if not operator_decisions:
         errors.append("no operator decisions recorded")
-    if not [row for row in operator_decisions if row.get("status") == "open"]:
-        errors.append("no open operator decision")
+    if not [row for row in operator_decisions if row.get("status") in {"open", "answered", "applied"}]:
+        errors.append("no operator decision lifecycle rows")
     lanes = {issue.get("lane") for issue in issues}
     for lane in LANES:
         if lane not in lanes:

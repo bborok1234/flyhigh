@@ -183,7 +183,7 @@ def briefing(full: dict[str, Any], issues: list[dict[str, Any]], ops: list[dict[
 
 
 def decision_console(decisions: list[dict[str, Any]]) -> str:
-    open_rows = [row for row in decisions if row.get("status") in {"open", "answered"}]
+    open_rows = [row for row in decisions if row.get("status") in {"open", "answered", "applied"}]
     if not open_rows:
         return (
             "<section class='decision-console'>"
