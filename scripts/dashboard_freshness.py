@@ -24,6 +24,9 @@ SOURCE_PATTERNS = [
     "skills/staging/*/score.json",
     "scripts/render-dashboard",
     "scripts/dashboard_freshness.py",
+    "scripts/github_state.py",
+    "scripts/sync-github-state",
+    "scripts/validate-dashboard-truth",
 ]
 
 EXCLUDED_PREFIXES = {

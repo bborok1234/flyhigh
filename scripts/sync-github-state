@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+import json
+
+from github_state import append_jsonl, build_live_state, write_json
+
+
+def load_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    live_state = build_live_state(root)
+    repositories = {
+        "generated_at": live_state["observed_at"],
+        "source": "scripts/sync-github-state",
+        "observed_at": live_state["observed_at"],
+        "live_state_path": "state/github/live-state.json",
+        "remote_write_performed": False,
+        "auth": live_state["auth"],
+        "repositories": live_state["repositories"],
+    }
+    write_json(root / "state" / "github" / "repositories.json", repositories)
+    write_json(root / "state" / "github" / "live-state.json", live_state)
+    repo_by_id = {repo["id"]: repo for repo in live_state["repositories"]}
+    ops_path = root / "state" / "github" / "operations.jsonl"
+    operations = load_jsonl(ops_path)
+    if operations:
+        for operation in operations:
+            repo = repo_by_id.get(operation.get("repository_id"))
+            if not repo:
+                continue
+            operation["publish_ready"] = repo.get("publish_ready", False)
+            operation["publish_blockers"] = list(repo.get("publish_blockers", []))
+            evidence = operation.setdefault("evidence", [])
+            if "scripts/sync-github-state" not in evidence:
+                evidence.append("scripts/sync-github-state")
+        write_jsonl(ops_path, operations)
+    append_jsonl(root / "state" / "github" / "sync-log.jsonl", {
+        "id": f"LIVE-{live_state['observed_at']}",
+        "timestamp": live_state["observed_at"],
+        "operation_id": "github-live-state",
+        "mode": "live_observe",
+        "result": "observed live git, gh auth, GitHub issues, and PRs without remote writes",
+        "remote_write_performed": False,
+        "evidence": ["state/github/repositories.json", "state/github/live-state.json"],
+    })
+    subprocess.run(["scripts/render-dashboard"], cwd=root, check=False)
+    print(f"synced github live state at {live_state['observed_at']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

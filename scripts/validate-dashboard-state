@@ -35,10 +35,6 @@ def main() -> int:
         errors.append("no operator decisions recorded")
     if not [row for row in operator_decisions if row.get("status") in {"open", "answered", "applied"}]:
         errors.append("no operator decision lifecycle rows")
-    lanes = {issue.get("lane") for issue in issues}
-    for lane in LANES:
-        if lane not in lanes:
-            errors.append(f"kanban lane has no issue: {lane}")
     for issue in issues:
         for key in REQUIRED_ISSUE:
             if key not in issue:

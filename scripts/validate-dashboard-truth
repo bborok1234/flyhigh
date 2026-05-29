@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+from github_state import build_live_state
+
+
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def by_id(rows: list[dict]) -> dict[str, dict]:
+    return {str(row.get("id", row.get("repo_id", ""))): row for row in rows}
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    recorded = load_json(root / "state" / "github" / "repositories.json")
+    live_file = load_json(root / "state" / "github" / "live-state.json")
+    current = build_live_state(root)
+    errors: list[str] = []
+
+    if not recorded:
+        errors.append("missing state/github/repositories.json")
+    if not live_file:
+        errors.append("missing state/github/live-state.json; run scripts/sync-github-state")
+
+    recorded_repos = by_id(recorded.get("repositories", []))
+    current_repos = by_id(current.get("repositories", []))
+    for repo_id, current_repo in current_repos.items():
+        recorded_repo = recorded_repos.get(repo_id)
+        if not recorded_repo:
+            errors.append(f"{repo_id} missing from repository SSOT")
+            continue
+        for key in ["remote_url", "remote_configured", "publish_ready", "branch", "github_repo"]:
+            if recorded_repo.get(key) != current_repo.get(key):
+                errors.append(f"{repo_id} stale {key}: recorded={recorded_repo.get(key)!r} live={current_repo.get(key)!r}")
+        if not recorded_repo.get("live_observed"):
+            errors.append(f"{repo_id} is not marked live_observed")
+        if not recorded_repo.get("observed_at"):
+            errors.append(f"{repo_id} missing observed_at")
+
+    if recorded.get("auth", {}).get("authenticated") != current.get("auth", {}).get("authenticated"):
+        errors.append("auth authenticated state is stale")
+    if recorded.get("auth", {}).get("account") != current.get("auth", {}).get("account"):
+        errors.append("auth account is stale")
+
+    live_repos = by_id(live_file.get("github", []))
+    current_live = by_id(current.get("github", []))
+    for repo_id, current_repo in current_live.items():
+        recorded_live = live_repos.get(repo_id)
+        if not recorded_live:
+            errors.append(f"{repo_id} missing from live-state github observations")
+            continue
+        for key in ["open_issue_count", "open_pr_count", "issues_ok", "prs_ok"]:
+            if recorded_live.get(key) != current_repo.get(key):
+                errors.append(f"{repo_id} stale GitHub {key}: recorded={recorded_live.get(key)!r} live={current_repo.get(key)!r}")
+
+    html = (root / "dashboard" / "flyhigh.html").read_text(encoding="utf-8") if (root / "dashboard" / "flyhigh.html").exists() else ""
+    for phrase in ["Live state", "live-observed", "open issues", "open PRs"]:
+        if phrase not in html:
+            errors.append(f"dashboard missing live-state phrase: {phrase}")
+
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    print(f"dashboard truth ok ({len(current_repos)} repositories, observed_at {recorded.get('observed_at')})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

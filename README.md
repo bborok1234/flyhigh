@@ -83,8 +83,10 @@ scripts/prepare-github-outbox --id GH-100
 scripts/publish-github-operation GH-100 --repo /path/to/project
 scripts/list-github-operations
 scripts/list-github-repositories
+scripts/sync-github-state
 scripts/validate-github-repositories
 scripts/validate-github-ops
+scripts/validate-dashboard-truth
 scripts/list-operator-decisions
 scripts/decide OD-001 approve publish_issue --operator operator
 scripts/list-operator-responses
@@ -115,6 +117,7 @@ Render the single-file dashboard with:
 ```bash
 scripts/render-dashboard
 scripts/validate-dashboard-freshness
+scripts/validate-dashboard-truth
 ```
 
 Then open:
@@ -125,6 +128,8 @@ dashboard/flyhigh.freshness.json
 ```
 
 `scripts/render-dashboard` writes freshness metadata with the tracked SSOT source hash, latest source mtime, renderer version, and render timestamp. `scripts/validate-dashboard-freshness` fails when dashboard HTML or metadata no longer matches the current SSOT. `scripts/validate-full-harness` includes this gate, and `scripts/harness-loop` rerenders after its final state update.
+
+Run `scripts/sync-github-state` before relying on GitHub/repository readiness. It observes local git remotes, `gh auth`, GitHub open issues, and open PRs without remote writes, then updates `state/github/repositories.json` and `state/github/live-state.json`. `scripts/validate-dashboard-truth` fails when the dashboard/SSOT claims repo, auth, issue, or PR facts that conflict with live observation.
 
 ## Repository Layout
 
@@ -190,6 +195,7 @@ scripts/validate-policy-fixture
 scripts/validate-adapters
 scripts/run-evals
 scripts/validate-dashboard-freshness
+scripts/validate-dashboard-truth
 scripts/validate-v1
 scripts/validate-full-harness
 ```

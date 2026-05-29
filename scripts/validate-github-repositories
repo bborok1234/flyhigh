@@ -16,8 +16,11 @@ REQUIRED_REPO = [
     "publish_ready",
     "publish_blockers",
     "evidence",
+    "observed_at",
+    "source",
+    "live_observed",
 ]
-REQUIRED_AUTH = ["provider", "authenticated", "account", "git_protocol", "checked_by", "remote_write_performed"]
+REQUIRED_AUTH = ["provider", "authenticated", "account", "git_protocol", "checked_by", "remote_write_performed", "observed_at", "source"]
 
 
 def load_json(path: Path) -> dict:
@@ -54,6 +57,8 @@ def main() -> int:
             errors.append(f"{repo.get('id')} publish_ready with blockers")
         if not repo.get("publish_ready") and not repo.get("publish_blockers"):
             errors.append(f"{repo.get('id')} blocked publish readiness without blockers")
+        if not repo.get("live_observed"):
+            errors.append(f"{repo.get('id')} repository mapping is cached without live observation")
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1
