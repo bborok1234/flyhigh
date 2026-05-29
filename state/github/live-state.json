@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-05-29T06:04:43.751488+00:00",
+  "observed_at": "2026-05-29T06:25:24.292700+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-05-29T06:04:44.148371+00:00",
+    "observed_at": "2026-05-29T06:25:24.647792+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -27,7 +27,7 @@
       "display_name": "Flyhigh harness",
       "local_path": ".",
       "local_path_resolved": "/Users/mirlim/sidejob/mybroker/flyhigh",
-      "branch": "main",
+      "branch": "record-beginner-profile-evidence",
       "remote_name": "origin",
       "remote_url": "git@github.com:bborok1234/flyhigh.git",
       "remote_configured": true,
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-05-29T06:04:43.751488+00:00",
+      "observed_at": "2026-05-29T06:25:24.292700+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-05-29T06:04:43.751488+00:00",
+      "observed_at": "2026-05-29T06:25:24.292700+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
