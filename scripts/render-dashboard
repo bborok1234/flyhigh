@@ -176,37 +176,34 @@ def target_report_panel(root: Path) -> str:
     target_root = Path(os.environ.get("FLYHIGH_TARGET_PROJECT_PATH", root.parent / "mybroker"))
     rollup_path = target_root / "reports" / "report-rollup.json"
     if not rollup_path.exists():
-        return "<p class='empty'>Target project report rollup 없음. MyBroker dashboard command를 먼저 실행해야 합니다.</p>"
+        return "<p class='empty'>Target project artifact rollup 없음. target project artifact command를 먼저 실행해야 합니다.</p>"
     rollup = load_json(rollup_path, {})
     latest_report = rollup.get("latest_report") or {}
     latest_scenario = rollup.get("latest_scenario") or {}
-    totals = rollup.get("totals", {})
     validation = latest_report.get("validation", {})
     source = latest_report.get("source", {})
-    total_items_key = "total_" + "sig" + "nals"
+    product_brief_path = target_root / "reports" / "product" / "market-brief.html"
+    ops_dashboard_path = target_root / "reports" / "dashboard.html"
     body = "<div class='metrics'>" + "".join([
         metric("Report artifacts", rollup.get("report_count", 0), "research_report.v1", "ok" if rollup.get("report_count") else "warn"),
         metric("Scenario artifacts", rollup.get("scenario_count", 0), "scenario_report.v1", "ok" if rollup.get("scenario_count") else "warn"),
         metric("Latest valid", "yes" if validation.get("valid") else "no", latest_report.get("run_id", "no latest"), "ok" if validation.get("valid") else "warn"),
-        metric("Scenario latest", latest_scenario.get("run_id", "none"), "beginner simulation", "ok" if latest_scenario.get("validation", {}).get("valid") else "warn"),
+        metric("Product brief", "ready" if product_brief_path.exists() else "missing", "linked artifact only", "ok" if product_brief_path.exists() else "warn"),
     ]) + "</div>"
     body += (
-        "<table><thead><tr><th>Run</th><th>Source</th><th>Symbols</th><th>Artifact</th></tr></thead><tbody>"
+        "<table><thead><tr><th>Run</th><th>Source</th><th>Symbols</th><th>Artifact links</th></tr></thead><tbody>"
         "<tr>"
         f"<td><strong>{esc(latest_report.get('run_id', ''))}</strong><span>{esc(latest_report.get('generated_at', ''))}</span></td>"
         f"<td>{esc(source.get('source', ''))}<span>{esc(source.get('row_count', ''))} rows</span></td>"
         f"<td>{esc(', '.join(source.get('symbols', [])))}</td>"
-        f"<td>{esc((target_root / 'reports' / 'dashboard.html').as_posix())}<span>{esc(rollup_path.as_posix())}</span></td>"
+        f"<td>{esc(ops_dashboard_path.as_posix())}<span>{esc(rollup_path.as_posix())}</span><span>{esc(product_brief_path.as_posix()) if product_brief_path.exists() else 'product brief missing'}</span></td>"
         "</tr></tbody></table>"
     )
     if latest_scenario:
-        market_map = latest_scenario.get("market_map", {})
-        candidates = latest_scenario.get("action_candidates", [])
         body += (
             "<div class='callout'>"
-            "<strong>MyBroker product pivot</strong>"
-            f"<p>{esc(market_map.get('beginner_summary', ''))}</p>"
-            f"<p>Top action candidate: {esc((candidates[0] or {}).get('title', '') if candidates else '')}</p>"
+            "<strong>Target product surface boundary</strong>"
+            f"<p>Latest scenario artifact: {esc(latest_scenario.get('run_id', ''))}. Product UI is not rendered in this operator dashboard; open the linked product brief artifact for the user-facing view.</p>"
             "</div>"
         )
     return body
@@ -584,7 +581,7 @@ def render(root: Path, freshness: dict[str, Any]) -> str:
         "<main>",
         card("Dashboard freshness", freshness_panel(freshness), "SSOT 변경 후 렌더가 누락되면 validate-dashboard-freshness가 실패합니다."),
         card("Live state", live_state_panel(github_live_state), "git, gh auth, GitHub issue/PR 관측값과 cached SSOT를 구분합니다."),
-        card("Target project reports", target_report_panel(root), "MyBroker research_report.v1 산출물을 사람이 읽을 수 있는 dashboard/rollup으로 추적합니다."),
+        card("Target project delivery", target_report_panel(root), "Target project artifact readiness and links only. Product UI is not rendered inline here."),
         decision_console(operator_decisions),
         "<section class='overview-grid'>",
         card("작업 상태", issue_summary(issues), "지금 진행 중인 작업과 검증 대기량"),

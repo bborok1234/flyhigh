@@ -166,8 +166,11 @@ def scan_domain_terms(root: Path) -> list[str]:
 
 def validate_dashboard(root: Path) -> list[str]:
     html = (root / "dashboard" / "flyhigh.html").read_text(encoding="utf-8") if (root / "dashboard" / "flyhigh.html").exists() else ""
-    required = ["운영 브리핑", "Decision Console", "운영자 결정 없음", "Dashboard freshness", "validate-dashboard-freshness", "Live state", "live-observed", "open issues", "open PRs", "Target project reports", "research_report.v1", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 가능", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
+    required = ["운영 브리핑", "Decision Console", "운영자 결정 없음", "Dashboard freshness", "validate-dashboard-freshness", "Live state", "live-observed", "open issues", "open PRs", "Target project delivery", "Product UI is not rendered inline here", "research_report.v1", "GitHub repository mapping", "Direction review", "Merge gates", "이슈 액션", "PR 액션", "Blockers", "게시 가능", "지금 판단할 항목", "작업 칸반", "GitHub 운영 보드", "최근 반복 로그", "결정 메모리", "Eval 결과", "시스템 표면"]
     errors = [f"dashboard missing phrase: {phrase}" for phrase in required if phrase not in html]
+    for phrase in ["MyBroker product pivot", "Top action candidate:", "MiroFish 참고 초보자 보기"]:
+        if phrase in html:
+            errors.append(f"dashboard contains inline product UI phrase: {phrase}")
     if "운영자 결정 없음" not in html:
         for phrase in ["추천", "선택지", "영향", "승인 범위", "Apply gate", "에이전트에게 전달할 명령", "실행 경로"]:
             if phrase not in html:

@@ -15,7 +15,8 @@ REQUIRED_PHRASES = [
     "live-observed",
     "open issues",
     "open PRs",
-    "Target project reports",
+    "Target project delivery",
+    "Product UI is not rendered inline here",
     "research_report.v1",
     "Direction review",
     "Merge gates",
@@ -43,6 +44,12 @@ SLOP_PHRASES = [
     "AI-powered solution",
 ]
 
+FORBIDDEN_PRODUCT_INLINE_PHRASES = [
+    "MyBroker product pivot",
+    "Top action candidate:",
+    "MiroFish 참고 초보자 보기",
+]
+
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
@@ -55,6 +62,9 @@ def main() -> int:
     for phrase in SLOP_PHRASES:
         if phrase.lower() in html.lower():
             errors.append(f"dashboard contains slop phrase: {phrase}")
+    for phrase in FORBIDDEN_PRODUCT_INLINE_PHRASES:
+        if phrase in html:
+            errors.append(f"dashboard contains inline product UI phrase: {phrase}")
     if "overview-grid" not in html or "action-table" not in html:
         errors.append("dashboard missing overview/action layout")
     if "board-five" not in html:
