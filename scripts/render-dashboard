@@ -179,15 +179,16 @@ def target_report_panel(root: Path) -> str:
         return "<p class='empty'>Target project report rollup 없음. MyBroker dashboard command를 먼저 실행해야 합니다.</p>"
     rollup = load_json(rollup_path, {})
     latest_report = rollup.get("latest_report") or {}
+    latest_scenario = rollup.get("latest_scenario") or {}
     totals = rollup.get("totals", {})
     validation = latest_report.get("validation", {})
     source = latest_report.get("source", {})
     total_items_key = "total_" + "sig" + "nals"
     body = "<div class='metrics'>" + "".join([
         metric("Report artifacts", rollup.get("report_count", 0), "research_report.v1", "ok" if rollup.get("report_count") else "warn"),
+        metric("Scenario artifacts", rollup.get("scenario_count", 0), "scenario_report.v1", "ok" if rollup.get("scenario_count") else "warn"),
         metric("Latest valid", "yes" if validation.get("valid") else "no", latest_report.get("run_id", "no latest"), "ok" if validation.get("valid") else "warn"),
-        metric("Research items", totals.get(total_items_key, 0), "latest rollup total", "neutral"),
-        metric("Warnings", len(latest_report.get("warnings", [])), "latest report", "warn" if latest_report.get("warnings") else "ok"),
+        metric("Scenario latest", latest_scenario.get("run_id", "none"), "beginner simulation", "ok" if latest_scenario.get("validation", {}).get("valid") else "warn"),
     ]) + "</div>"
     body += (
         "<table><thead><tr><th>Run</th><th>Source</th><th>Symbols</th><th>Artifact</th></tr></thead><tbody>"
@@ -198,6 +199,16 @@ def target_report_panel(root: Path) -> str:
         f"<td>{esc((target_root / 'reports' / 'dashboard.html').as_posix())}<span>{esc(rollup_path.as_posix())}</span></td>"
         "</tr></tbody></table>"
     )
+    if latest_scenario:
+        market_map = latest_scenario.get("market_map", {})
+        candidates = latest_scenario.get("action_candidates", [])
+        body += (
+            "<div class='callout'>"
+            "<strong>MyBroker product pivot</strong>"
+            f"<p>{esc(market_map.get('beginner_summary', ''))}</p>"
+            f"<p>Top action candidate: {esc((candidates[0] or {}).get('title', '') if candidates else '')}</p>"
+            "</div>"
+        )
     return body
 
 
@@ -680,6 +691,9 @@ h3 {{ margin:0; font-size:14px; line-height:1.35; font-weight:720; }}
 .metric.ok {{ background:var(--ok-soft); border-color:#c9ead8; }}
 .metric.warn {{ background:var(--warn-soft); border-color:#f5d7aa; }}
 .metric.focus {{ background:var(--accent-soft); border-color:#ccdafb; }}
+.callout {{ margin-top:12px; border:1px solid #c9ead8; border-radius:8px; padding:12px; background:var(--ok-soft); }}
+.callout strong {{ display:block; margin-bottom:6px; }}
+.callout p {{ margin:4px 0 0; color:#31513f; }}
 .decision-console {{
   background:var(--panel);
   border:1px solid var(--line);
