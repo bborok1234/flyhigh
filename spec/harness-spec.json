@@ -15,6 +15,7 @@
     "iterations": "state/iterations.jsonl",
     "github_operations": "state/github/operations.jsonl",
     "github_repositories": "state/github/repositories.json",
+    "github_live_state": "state/github/live-state.json",
     "github_merge_gates": "state/github/merge-gates.jsonl",
     "github_sync_log": "state/github/sync-log.jsonl"
   },
@@ -79,7 +80,10 @@
       "remote_configured",
       "publish_ready",
       "publish_blockers",
-      "evidence"
+      "evidence",
+      "observed_at",
+      "source",
+      "live_observed"
     ],
     "operator_decision_required_fields": [
       "id",
@@ -182,6 +186,7 @@
     "dashboard_state": "scripts/validate-dashboard-state",
     "dashboard_freshness": "scripts/validate-dashboard-freshness",
     "github_repositories": "scripts/validate-github-repositories",
+    "dashboard_truth": "scripts/validate-dashboard-truth",
     "github_operations": "scripts/validate-github-ops",
     "operator_decisions": "scripts/validate-operator-decisions",
     "hitl_governance": "scripts/validate-hitl-governance",

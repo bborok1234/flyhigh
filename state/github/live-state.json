@@ -1,8 +1,7 @@
 {
-  "generated_at": "2026-05-29T04:01:11.197544+00:00",
-  "source": "scripts/sync-github-state",
+  "schema_version": "github_live_state.v1",
   "observed_at": "2026-05-29T04:01:11.197544+00:00",
-  "live_state_path": "state/github/live-state.json",
+  "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
     "provider": "github.com",
@@ -65,6 +64,68 @@
       "observed_at": "2026-05-29T04:01:11.197544+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
+    }
+  ],
+  "github": [
+    {
+      "repo_id": "flyhigh-harness",
+      "github_repo": "bborok1234/flyhigh",
+      "open_issue_count": 0,
+      "open_pr_count": 1,
+      "issues_ok": true,
+      "prs_ok": true,
+      "issues": [],
+      "prs": [
+        {
+          "number": 3,
+          "state": "OPEN",
+          "title": "Make the dashboard truthful for usable v1",
+          "updatedAt": "2026-05-29T03:59:27Z",
+          "url": "https://github.com/bborok1234/flyhigh/pull/3"
+        }
+      ],
+      "issue_error": "",
+      "pr_error": ""
+    },
+    {
+      "repo_id": "target-project",
+      "github_repo": "bborok1234/mybroker",
+      "open_issue_count": 1,
+      "open_pr_count": 0,
+      "issues_ok": true,
+      "prs_ok": true,
+      "issues": [
+        {
+          "labels": [
+            {
+              "id": "LA_kwDOSp9aqc8AAAAClAgTcg",
+              "name": "flyhigh",
+              "description": "Managed by Flyhigh",
+              "color": "275cc8"
+            },
+            {
+              "id": "LA_kwDOSp9aqc8AAAAClAgTdw",
+              "name": "target-project",
+              "description": "Target project rollout",
+              "color": "5319e7"
+            },
+            {
+              "id": "LA_kwDOSp9aqc8AAAAClAgTfw",
+              "name": "operator-review",
+              "description": "Needs operator review",
+              "color": "fbca04"
+            }
+          ],
+          "number": 1,
+          "state": "OPEN",
+          "title": "두 번째 프로젝트 데이터 파이프라인 확장",
+          "updatedAt": "2026-05-28T04:19:56Z",
+          "url": "https://github.com/bborok1234/mybroker/issues/1"
+        }
+      ],
+      "prs": [],
+      "issue_error": "",
+      "pr_error": ""
     }
   ]
 }

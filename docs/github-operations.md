@@ -57,8 +57,10 @@ scripts/decide OD-001 approve publish_issue --operator <name>
 scripts/apply-operator-decisions
 scripts/list-github-operations
 scripts/list-github-repositories
+scripts/sync-github-state
 scripts/validate-github-repositories
 scripts/validate-github-ops
+scripts/validate-dashboard-truth
 scripts/review-direction
 scripts/evaluate-merge-gate
 scripts/merge-approved-pr MG-001
@@ -66,7 +68,7 @@ scripts/merge-approved-pr MG-001
 
 Dry-run publish records `dry_run_command` and `dry_run_at` back into `state/github/operations.jsonl`, and appends a sync record. This keeps operator-visible evidence even when no remote GitHub write is performed.
 
-Repository mapping records GitHub auth status, local path strategy, remote URL, and publish blockers. A missing remote keeps `publish_ready=false` even when issue content, outbox, and scoped approval are ready.
+Repository mapping records GitHub auth status, local path strategy, remote URL, publish blockers, `observed_at`, and whether the row was `live_observed`. `scripts/sync-github-state` is the only normal writer for live repository readiness. A missing remote keeps `publish_ready=false` even when issue content, outbox, and scoped approval are ready. `scripts/validate-dashboard-truth` rechecks local git, `gh auth`, open issues, and open PRs so the dashboard cannot silently present stale GitHub facts as current truth.
 
 ## Design Notes
 

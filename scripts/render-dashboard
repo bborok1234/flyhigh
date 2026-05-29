@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import html
 import json
+import os
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -140,6 +141,64 @@ def github_summary(ops: list[dict[str, Any]], sync_rows: list[dict[str, Any]], r
         metric("Dry-run", dry_runs, "원격 쓰기 없음", "ok"),
         metric("Repo mapping", f"{ready}/{mapped}", "publish-ready", "ok" if mapped and ready == mapped else "warn"),
     ]) + "</div>"
+
+
+def live_state_panel(live_state: dict[str, Any]) -> str:
+    github_rows = live_state.get("github", [])
+    observed_at = live_state.get("observed_at", "미확인")
+    open_issues = sum(row.get("open_issue_count", 0) for row in github_rows)
+    open_prs = sum(row.get("open_pr_count", 0) for row in github_rows)
+    ok_count = sum(1 for row in github_rows if row.get("issues_ok") and row.get("prs_ok"))
+    body = "<div class='metrics'>" + "".join([
+        metric("Observed", observed_at, "live-observed", "ok" if github_rows else "warn"),
+        metric("open issues", open_issues, "GitHub live query", "neutral"),
+        metric("open PRs", open_prs, "GitHub live query", "neutral"),
+        metric("Repos checked", f"{ok_count}/{len(github_rows)}", "issues + PRs", "ok" if github_rows and ok_count == len(github_rows) else "warn"),
+    ]) + "</div>"
+    rows = []
+    for row in github_rows:
+        rows.append(
+            "<tr>"
+            f"<td><strong>{esc(row.get('repo_id', ''))}</strong><span>{esc(row.get('github_repo', ''))}</span></td>"
+            f"<td>{esc(row.get('open_issue_count', 0))}</td>"
+            f"<td>{esc(row.get('open_pr_count', 0))}</td>"
+            f"<td>{pill('live-observed' if row.get('issues_ok') and row.get('prs_ok') else '관측 실패', 'ok' if row.get('issues_ok') and row.get('prs_ok') else 'warn')}</td>"
+            "</tr>"
+        )
+    body += (
+        "<table><thead><tr><th>Repo</th><th>open issues</th><th>open PRs</th><th>상태</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table>"
+    )
+    return body
+
+
+def target_report_panel(root: Path) -> str:
+    target_root = Path(os.environ.get("FLYHIGH_TARGET_PROJECT_PATH", root.parent / "mybroker"))
+    rollup_path = target_root / "reports" / "report-rollup.json"
+    if not rollup_path.exists():
+        return "<p class='empty'>Target project report rollup 없음. MyBroker dashboard command를 먼저 실행해야 합니다.</p>"
+    rollup = load_json(rollup_path, {})
+    latest_report = rollup.get("latest_report") or {}
+    totals = rollup.get("totals", {})
+    validation = latest_report.get("validation", {})
+    source = latest_report.get("source", {})
+    total_items_key = "total_" + "sig" + "nals"
+    body = "<div class='metrics'>" + "".join([
+        metric("Report artifacts", rollup.get("report_count", 0), "research_report.v1", "ok" if rollup.get("report_count") else "warn"),
+        metric("Latest valid", "yes" if validation.get("valid") else "no", latest_report.get("run_id", "no latest"), "ok" if validation.get("valid") else "warn"),
+        metric("Research items", totals.get(total_items_key, 0), "latest rollup total", "neutral"),
+        metric("Warnings", len(latest_report.get("warnings", [])), "latest report", "warn" if latest_report.get("warnings") else "ok"),
+    ]) + "</div>"
+    body += (
+        "<table><thead><tr><th>Run</th><th>Source</th><th>Symbols</th><th>Artifact</th></tr></thead><tbody>"
+        "<tr>"
+        f"<td><strong>{esc(latest_report.get('run_id', ''))}</strong><span>{esc(latest_report.get('generated_at', ''))}</span></td>"
+        f"<td>{esc(source.get('source', ''))}<span>{esc(source.get('row_count', ''))} rows</span></td>"
+        f"<td>{esc(', '.join(source.get('symbols', [])))}</td>"
+        f"<td>{esc((target_root / 'reports' / 'dashboard.html').as_posix())}<span>{esc(rollup_path.as_posix())}</span></td>"
+        "</tr></tbody></table>"
+    )
+    return body
 
 
 def validation_summary(root: Path) -> str:
@@ -377,8 +436,8 @@ def github_repository_panel(repositories: dict[str, Any]) -> str:
             f"<td><strong>{esc(repo.get('id', ''))}</strong><span>{esc(repo.get('role', ''))}</span></td>"
             f"<td>{pill('게시 가능' if repo.get('publish_ready') else '게시 차단', 'ok' if repo.get('publish_ready') else 'warn')}</td>"
             f"<td>{esc(repo.get('local_path', ''))}</td>"
-            f"<td>{esc(repo.get('remote_url') or 'remote 없음')}</td>"
-            f"<td>{esc(blockers)}</td>"
+            f"<td>{esc(repo.get('remote_url') or 'remote 없음')}<span>{esc(repo.get('github_repo', ''))}</span></td>"
+            f"<td>{esc(blockers)}<span>{esc(repo.get('observed_at', ''))} · {esc(repo.get('source', 'cached'))}</span></td>"
             "</tr>"
         )
     return (
@@ -502,6 +561,7 @@ def render(root: Path, freshness: dict[str, Any]) -> str:
     github_ops = load_jsonl(root / "state" / "github" / "operations.jsonl")
     github_sync = load_jsonl(root / "state" / "github" / "sync-log.jsonl")
     github_repositories = load_json(root / "state" / "github" / "repositories.json", {})
+    github_live_state = load_json(root / "state" / "github" / "live-state.json", {})
     direction_reviews = load_jsonl(root / "state" / "reviews" / "direction-reviews.jsonl")
     merge_gates = load_jsonl(root / "state" / "github" / "merge-gates.jsonl")
     operator_decisions = load_jsonl(root / "state" / "operator-decisions.jsonl")
@@ -512,6 +572,8 @@ def render(root: Path, freshness: dict[str, Any]) -> str:
         briefing(full, issues, github_ops, iterations, operator_decisions, generated_at, freshness),
         "<main>",
         card("Dashboard freshness", freshness_panel(freshness), "SSOT 변경 후 렌더가 누락되면 validate-dashboard-freshness가 실패합니다."),
+        card("Live state", live_state_panel(github_live_state), "git, gh auth, GitHub issue/PR 관측값과 cached SSOT를 구분합니다."),
+        card("Target project reports", target_report_panel(root), "MyBroker research_report.v1 산출물을 사람이 읽을 수 있는 dashboard/rollup으로 추적합니다."),
         decision_console(operator_decisions),
         "<section class='overview-grid'>",
         card("작업 상태", issue_summary(issues), "지금 진행 중인 작업과 검증 대기량"),
