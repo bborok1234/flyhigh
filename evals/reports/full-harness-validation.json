@@ -41,13 +41,13 @@
       "name": "dashboard truth",
       "command": "scripts/validate-dashboard-truth",
       "returncode": 0,
-      "output": "dashboard truth ok (2 repositories, observed_at 2026-05-29T08:43:41.105762+00:00)"
+      "output": "dashboard truth ok (2 repositories, observed_at 2026-05-29T08:46:14.781590+00:00)"
     },
     {
       "name": "github ops",
       "command": "scripts/validate-github-ops",
       "returncode": 0,
-      "output": "github ops ok (5 operations, 45 sync records)"
+      "output": "github ops ok (5 operations, 47 sync records)"
     },
     {
       "name": "operator decisions",
@@ -83,7 +83,7 @@
       "name": "dashboard freshness",
       "command": "scripts/validate-dashboard-freshness",
       "returncode": 0,
-      "output": "dashboard freshness ok (40 sources, hash 922e6ecab57e, rendered_at 2026-05-29T08:43:45.011167+00:00)"
+      "output": "dashboard freshness ok (40 sources, hash 436b11bd953b, rendered_at 2026-05-29T08:46:18.439519+00:00)"
     },
     {
       "name": "skillopt fixture",
@@ -119,7 +119,7 @@
       "name": "installation",
       "command": "scripts/validate-installation",
       "returncode": 0,
-      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp787msly5/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp787msly5/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp787msly5/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp787msly5/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
+      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpq9f72dts/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpq9f72dts/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpq9f72dts/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpq9f72dts/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
     }
   ]
 }
