@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-05-29T04:02:59.287893+00:00",
+  "observed_at": "2026-05-29T05:14:59.612556+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-05-29T04:02:59.685759+00:00",
+    "observed_at": "2026-05-29T05:14:59.988953+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-05-29T04:02:59.287893+00:00",
+      "observed_at": "2026-05-29T05:14:59.612556+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-05-29T04:02:59.287893+00:00",
+      "observed_at": "2026-05-29T05:14:59.612556+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
@@ -82,39 +82,11 @@
     {
       "repo_id": "target-project",
       "github_repo": "bborok1234/mybroker",
-      "open_issue_count": 1,
+      "open_issue_count": 0,
       "open_pr_count": 0,
       "issues_ok": true,
       "prs_ok": true,
-      "issues": [
-        {
-          "labels": [
-            {
-              "id": "LA_kwDOSp9aqc8AAAAClAgTcg",
-              "name": "flyhigh",
-              "description": "Managed by Flyhigh",
-              "color": "275cc8"
-            },
-            {
-              "id": "LA_kwDOSp9aqc8AAAAClAgTdw",
-              "name": "target-project",
-              "description": "Target project rollout",
-              "color": "5319e7"
-            },
-            {
-              "id": "LA_kwDOSp9aqc8AAAAClAgTfw",
-              "name": "operator-review",
-              "description": "Needs operator review",
-              "color": "fbca04"
-            }
-          ],
-          "number": 1,
-          "state": "OPEN",
-          "title": "두 번째 프로젝트 데이터 파이프라인 확장",
-          "updatedAt": "2026-05-28T04:19:56Z",
-          "url": "https://github.com/bborok1234/mybroker/issues/1"
-        }
-      ],
+      "issues": [],
       "prs": [],
       "issue_error": "",
       "pr_error": ""
