@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-05-29T04:01:11.197544+00:00",
+  "observed_at": "2026-05-29T04:02:59.287893+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-05-29T04:01:11.588468+00:00",
+    "observed_at": "2026-05-29T04:02:59.685759+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -27,7 +27,7 @@
       "display_name": "Flyhigh harness",
       "local_path": ".",
       "local_path_resolved": "/Users/mirlim/sidejob/mybroker/flyhigh",
-      "branch": "flyhigh-live-state-v1",
+      "branch": "main",
       "remote_name": "origin",
       "remote_url": "git@github.com:bborok1234/flyhigh.git",
       "remote_configured": true,
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-05-29T04:01:11.197544+00:00",
+      "observed_at": "2026-05-29T04:02:59.287893+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-05-29T04:01:11.197544+00:00",
+      "observed_at": "2026-05-29T04:02:59.287893+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
@@ -71,19 +71,11 @@
       "repo_id": "flyhigh-harness",
       "github_repo": "bborok1234/flyhigh",
       "open_issue_count": 0,
-      "open_pr_count": 1,
+      "open_pr_count": 0,
       "issues_ok": true,
       "prs_ok": true,
       "issues": [],
-      "prs": [
-        {
-          "number": 3,
-          "state": "OPEN",
-          "title": "Make the dashboard truthful for usable v1",
-          "updatedAt": "2026-05-29T03:59:27Z",
-          "url": "https://github.com/bborok1234/flyhigh/pull/3"
-        }
-      ],
+      "prs": [],
       "issue_error": "",
       "pr_error": ""
     },
