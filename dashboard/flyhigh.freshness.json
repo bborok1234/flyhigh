@@ -3,12 +3,12 @@
   "renderer_version": "render-dashboard.v2",
   "dashboard_path": "dashboard/flyhigh.html",
   "metadata_path": "dashboard/flyhigh.freshness.json",
-  "rendered_at": "2026-05-29T04:01:18.318167+00:00",
+  "rendered_at": "2026-05-29T04:01:45.104572+00:00",
   "fresh": true,
   "source_count": 40,
-  "source_hash": "de0612a0b5f4965a7467d1691cc7622ed81392245c6adec4f2bb07f1f7a831b9",
-  "latest_source_mtime_ns": 1780027278123008864,
-  "latest_source_mtime": "2026-05-29T04:01:18.123009+00:00",
+  "source_hash": "733aa411bd4113476553cb8c4bc902d3fdecfbe49f51502f709f0742222ee6e2",
+  "latest_source_mtime_ns": 1780027305057804162,
+  "latest_source_mtime": "2026-05-29T04:01:45.057804+00:00",
   "sources": [
     {
       "path": "evals/reports/all.json",
@@ -173,10 +173,10 @@
     },
     {
       "path": "state/github/merge-gates.jsonl",
-      "sha256": "a12b7920870a33ab1d91e4045ce5abaee7e0dea55942b201b43439eecaf8dc20",
-      "size": 6292,
-      "mtime_ns": 1780027238342567387,
-      "mtime": "2026-05-29T04:00:38.342567+00:00"
+      "sha256": "17ea099b3b951bb431993d0d14974fb6e638173d331555afa1c60d3e6d7ac6d8",
+      "size": 6401,
+      "mtime_ns": 1780027305057804162,
+      "mtime": "2026-05-29T04:01:45.057804+00:00"
     },
     {
       "path": "state/github/operations.jsonl",
