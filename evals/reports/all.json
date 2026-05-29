@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-29T06:02:27.014982+00:00",
+  "timestamp": "2026-05-29T06:04:53.043388+00:00",
   "suite": "all",
   "results": [
     {
@@ -100,7 +100,7 @@
       "evidence": [
         "scripts/validate-github-ops"
       ],
-      "output": "github ops ok (5 operations, 26 sync records)"
+      "output": "github ops ok (5 operations, 28 sync records)"
     },
     {
       "suite": "operator-decisions",
