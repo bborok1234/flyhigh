@@ -3,19 +3,19 @@
   "renderer_version": "render-dashboard.v2",
   "dashboard_path": "dashboard/flyhigh.html",
   "metadata_path": "dashboard/flyhigh.freshness.json",
-  "rendered_at": "2026-06-05T08:07:55.047220+00:00",
+  "rendered_at": "2026-06-05T08:17:57.065342+00:00",
   "fresh": true,
   "source_count": 40,
-  "source_hash": "1b0a6be7bc0db1b81ba39febcb79961f3b1ab79ed9cd56ffd3120ef6035acf41",
-  "latest_source_mtime_ns": 1780646874874301642,
-  "latest_source_mtime": "2026-06-05T08:07:54.874302+00:00",
+  "source_hash": "eaf302067535d372fbdd53227c817c3277f9ef816093b75ab7d0bfa3634c2ee5",
+  "latest_source_mtime_ns": 1780647477008045865,
+  "latest_source_mtime": "2026-06-05T08:17:57.008046+00:00",
   "sources": [
     {
       "path": "evals/reports/all.json",
-      "sha256": "5dedc994ed14c2524b0ef531e116b0a2c0aeb91a70985c979bd743dd909e16a8",
+      "sha256": "1842bb92e37293593b3a3bcc036d9392db8e4551bd0f72811ba64785d4a775e1",
       "size": 3423,
-      "mtime_ns": 1780646874874301642,
-      "mtime": "2026-06-05T08:07:54.874302+00:00"
+      "mtime_ns": 1780647476779948106,
+      "mtime": "2026-06-05T08:17:56.779948+00:00"
     },
     {
       "path": "evals/reports/v1-validation.json",
@@ -131,17 +131,17 @@
     },
     {
       "path": "skills/staging/fixture-rejected-qa-note/patch.json",
-      "sha256": "e135db21b647c52d6c4e597440aa0278bdb98e4a722f2b839ff8fccf3d456646",
+      "sha256": "e5c4a503125d84e439e1d5e026da470361e23c6187f26e43893386b4a793a0f0",
       "size": 330,
-      "mtime_ns": 1780646874649798593,
-      "mtime": "2026-06-05T08:07:54.649799+00:00"
+      "mtime_ns": 1780647476568995103,
+      "mtime": "2026-06-05T08:17:56.568995+00:00"
     },
     {
       "path": "skills/staging/fixture-rejected-qa-note/score.json",
       "sha256": "64af31adb0626cbce2596d67c47481508e226f8dd007afb9b1e96c89993d3bb5",
       "size": 201,
-      "mtime_ns": 1780646874588132026,
-      "mtime": "2026-06-05T08:07:54.588132+00:00"
+      "mtime_ns": 1780647476508070495,
+      "mtime": "2026-06-05T08:17:56.508070+00:00"
     },
     {
       "path": "spec/harness-spec.json",
@@ -166,52 +166,52 @@
     },
     {
       "path": "state/github/live-state.json",
-      "sha256": "dae9e173e99488b07b85d0a2adbd58d58699916f6f12ea218b7a1a8eb4a4e959",
+      "sha256": "3b05436148f6b2aaa08f2307b9ea2894f20266e231da3024ef8c72ca5b228a06",
       "size": 2679,
-      "mtime_ns": 1780646754169819843,
-      "mtime": "2026-06-05T08:05:54.169820+00:00"
+      "mtime_ns": 1780647469198084316,
+      "mtime": "2026-06-05T08:17:49.198084+00:00"
     },
     {
       "path": "state/github/merge-gates.jsonl",
-      "sha256": "c55ce6cdfe719df913014f5fd99c1ec98e2841ccf015ba09085965cfb2d73bfa",
-      "size": 48010,
-      "mtime_ns": 1780646651489008493,
-      "mtime": "2026-06-05T08:04:11.489008+00:00"
+      "sha256": "182a7bbf4f7aefdd6da86992a9206ccc998458d143e2184dd079b312a8da3663",
+      "size": 49788,
+      "mtime_ns": 1780647382497515210,
+      "mtime": "2026-06-05T08:16:22.497515+00:00"
     },
     {
       "path": "state/github/operations.jsonl",
       "sha256": "168b3b24ed2b7f10f2de0c50c9917ae2b17beed3766660e0ba548fe6afe78701",
       "size": 7690,
-      "mtime_ns": 1780646754170410427,
-      "mtime": "2026-06-05T08:05:54.170410+00:00"
+      "mtime_ns": 1780647469198357775,
+      "mtime": "2026-06-05T08:17:49.198358+00:00"
     },
     {
       "path": "state/github/repositories.json",
-      "sha256": "9258afbaf426178fb16d744f3c94a7cdd000408c6e34a70c1c31c4769edc545e",
+      "sha256": "43ffad33194355063a6635b61eb369ace8860efa63118da76476d0fc18524413",
       "size": 2170,
-      "mtime_ns": 1780646754169447260,
-      "mtime": "2026-06-05T08:05:54.169447+00:00"
+      "mtime_ns": 1780647469197864400,
+      "mtime": "2026-06-05T08:17:49.197864+00:00"
     },
     {
       "path": "state/github/sync-log.jsonl",
-      "sha256": "da521c879fe771ff851dde88ce573e871e74cfaa4585b6a6804cfb338658d5b6",
-      "size": 27665,
-      "mtime_ns": 1780646754170654010,
-      "mtime": "2026-06-05T08:05:54.170654+00:00"
+      "sha256": "531e93cfb5f1a394aaab97b9fc10e10c04e4ccd29a1789b287ae5e719dd6626b",
+      "size": 28379,
+      "mtime_ns": 1780647469198576275,
+      "mtime": "2026-06-05T08:17:49.198576+00:00"
     },
     {
       "path": "state/issues.jsonl",
-      "sha256": "5303fa6a5e4628ff9243f950bbfa9774d7cdbdc599e10cbe3163dafd834068c2",
-      "size": 23966,
-      "mtime_ns": 1780646700397875868,
-      "mtime": "2026-06-05T08:05:00.397876+00:00"
+      "sha256": "1168aa5a9c45884c22c876fdacd9741bd5f3a8a952168c7ab3a65f5b19a55b67",
+      "size": 24747,
+      "mtime_ns": 1780647437869113002,
+      "mtime": "2026-06-05T08:17:17.869113+00:00"
     },
     {
       "path": "state/iterations.jsonl",
-      "sha256": "1cd0a9bba75b24689afc57da840a432829750fbef26b0d07f7d8a03a8b86ea23",
-      "size": 19038,
-      "mtime_ns": 1780646762445337331,
-      "mtime": "2026-06-05T08:06:02.445337+00:00"
+      "sha256": "6d769521a4b1dcb9f01959ecefd0388e1ba3471d4cf2cf79095c8b73da729ef4",
+      "size": 19660,
+      "mtime_ns": 1780647477008045865,
+      "mtime": "2026-06-05T08:17:57.008046+00:00"
     },
     {
       "path": "state/operator-decisions.jsonl",
@@ -229,10 +229,10 @@
     },
     {
       "path": "state/reviews/direction-reviews.jsonl",
-      "sha256": "d0df2aa9df5352fac87ce0d83ae69342de19bfa0d8c833f0effc5582c76f2d91",
-      "size": 34994,
-      "mtime_ns": 1780646820101498427,
-      "mtime": "2026-06-05T08:07:00.101498+00:00"
+      "sha256": "5fb3e7aa2ecef65610d045a3fc5c2b53852c0c13db83fc2bee3bc7587e6ff659",
+      "size": 36229,
+      "mtime_ns": 1780647328127583741,
+      "mtime": "2026-06-05T08:15:28.127584+00:00"
     },
     {
       "path": "state/skillopt/promotions.jsonl",
@@ -243,17 +243,17 @@
     },
     {
       "path": "state/skillopt/rejected-edits.jsonl",
-      "sha256": "99946c1a54596dfdb0e50c1975f2dbaef8ec4de93f57f8dffcf2f07e817d4963",
+      "sha256": "b5d7b0ea1cd42a438d8b98a615f04924758d7bd0fd3f06c780a6458dd86270bc",
       "size": 481,
-      "mtime_ns": 1780646874649686634,
-      "mtime": "2026-06-05T08:07:54.649687+00:00"
+      "mtime_ns": 1780647476568877187,
+      "mtime": "2026-06-05T08:17:56.568877+00:00"
     },
     {
       "path": "state/skillopt/runs/fixture-cycle.json",
-      "sha256": "53c73647817b31a9be5c9f6f17289076a6c9722b27c78d0c38124c7bdd47a6ff",
+      "sha256": "00bbeaac064f27f53bf7d47807fc733db9dc1b4a8075c11f3085fe57647131c4",
       "size": 275,
-      "mtime_ns": 1780646874379578150,
-      "mtime": "2026-06-05T08:07:54.379578+00:00"
+      "mtime_ns": 1780647476310901998,
+      "mtime": "2026-06-05T08:17:56.310902+00:00"
     },
     {
       "path": "state/skillopt/runs/sample-cycle.json",
