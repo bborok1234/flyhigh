@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-06-05T09:07:54.245635+00:00",
+  "generated_at": "2026-06-05T09:29:36.484985+00:00",
   "source": "scripts/sync-github-state",
-  "observed_at": "2026-06-05T09:07:54.245635+00:00",
+  "observed_at": "2026-06-05T09:29:36.484985+00:00",
   "live_state_path": "state/github/live-state.json",
   "remote_write_performed": false,
   "auth": {
@@ -18,7 +18,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-06-05T09:07:54.621876+00:00",
+    "observed_at": "2026-06-05T09:29:36.875800+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -40,7 +40,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-05T09:07:54.245635+00:00",
+      "observed_at": "2026-06-05T09:29:36.484985+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -62,7 +62,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-05T09:07:54.245635+00:00",
+      "observed_at": "2026-06-05T09:29:36.484985+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
