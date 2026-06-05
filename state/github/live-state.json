@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-06-05T21:08:07.055640+00:00",
+  "observed_at": "2026-06-05T21:31:57.441290+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-06-05T21:08:07.437979+00:00",
+    "observed_at": "2026-06-05T21:31:57.905047+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-05T21:08:07.055640+00:00",
+      "observed_at": "2026-06-05T21:31:57.441290+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-05T21:08:07.055640+00:00",
+      "observed_at": "2026-06-05T21:31:57.441290+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
@@ -82,20 +82,11 @@
     {
       "repo_id": "target-project",
       "github_repo": "bborok1234/mybroker",
-      "open_issue_count": 1,
+      "open_issue_count": 0,
       "open_pr_count": 0,
       "issues_ok": true,
       "prs_ok": true,
-      "issues": [
-        {
-          "labels": [],
-          "number": 111,
-          "state": "OPEN",
-          "title": "Add council response apply handoff to daily appliance loop",
-          "updatedAt": "2026-06-05T19:27:49Z",
-          "url": "https://github.com/bborok1234/mybroker/issues/111"
-        }
-      ],
+      "issues": [],
       "prs": [],
       "issue_error": "",
       "pr_error": ""

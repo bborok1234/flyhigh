@@ -1,6 +1,6 @@
 {
   "id": "fixture-cycle",
-  "timestamp": "2026-06-05T21:08:16.875071+00:00",
+  "timestamp": "2026-06-05T21:32:06.813138+00:00",
   "skill": "qa",
   "rollout_evidence": [
     "evals/suites/skillopt/basic/rubric.md"
