@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-29T10:00:19.977038+00:00",
+  "timestamp": "2026-06-05T05:58:35.002528+00:00",
   "suite": "all",
   "results": [
     {
@@ -100,7 +100,7 @@
       "evidence": [
         "scripts/validate-github-ops"
       ],
-      "output": "github ops ok (5 operations, 52 sync records)"
+      "output": "github ops ok (5 operations, 55 sync records)"
     },
     {
       "suite": "operator-decisions",
@@ -130,7 +130,7 @@
       "evidence": [
         "scripts/validate-direction-reviews"
       ],
-      "output": "direction reviews ok (13 reviews)"
+      "output": "direction reviews ok (14 reviews)"
     },
     {
       "suite": "merge-gates",
@@ -140,7 +140,7 @@
       "evidence": [
         "scripts/validate-merge-gates"
       ],
-      "output": "merge gates ok (12 gates)"
+      "output": "merge gates ok (13 gates)"
     }
   ],
   "passed": true
