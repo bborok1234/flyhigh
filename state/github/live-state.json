@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-06-06T05:05:19.514816+00:00",
+  "observed_at": "2026-06-06T05:07:29.085339+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-06-06T05:05:19.869179+00:00",
+    "observed_at": "2026-06-06T05:07:29.440284+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-06T05:05:19.514816+00:00",
+      "observed_at": "2026-06-06T05:07:29.085339+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-06T05:05:19.514816+00:00",
+      "observed_at": "2026-06-06T05:07:29.085339+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
@@ -71,7 +71,7 @@
       "repo_id": "flyhigh-harness",
       "github_repo": "bborok1234/flyhigh",
       "open_issue_count": 1,
-      "open_pr_count": 0,
+      "open_pr_count": 1,
       "issues_ok": true,
       "prs_ok": true,
       "issues": [
@@ -84,7 +84,15 @@
           "url": "https://github.com/bborok1234/flyhigh/issues/12"
         }
       ],
-      "prs": [],
+      "prs": [
+        {
+          "number": 13,
+          "state": "OPEN",
+          "title": "Record target daily briefing packet gate",
+          "updatedAt": "2026-06-06T05:06:19Z",
+          "url": "https://github.com/bborok1234/flyhigh/pull/13"
+        }
+      ],
       "issue_error": "",
       "pr_error": ""
     },
