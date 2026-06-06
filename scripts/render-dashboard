@@ -683,8 +683,8 @@ h3 {{ margin:0; font-size:14px; line-height:1.35; font-weight:720; }}
 .metrics {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }}
 .metric {{ border:1px solid var(--line-soft); border-radius:8px; padding:12px; background:#fbfcfe; min-width:0; }}
 .metric span {{ display:block; color:var(--muted); font-size:12px; font-weight:680; }}
-.metric strong {{ display:block; margin-top:6px; font-size:25px; line-height:1; letter-spacing:0; }}
-.metric small {{ display:block; margin-top:8px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+.metric strong {{ display:block; margin-top:6px; font-size:25px; line-height:1.08; letter-spacing:0; max-width:100%; overflow-wrap:anywhere; word-break:break-word; }}
+.metric small {{ display:block; margin-top:8px; color:var(--faint); max-width:100%; overflow-wrap:anywhere; word-break:break-word; }}
 .metric.ok {{ background:var(--ok-soft); border-color:#c9ead8; }}
 .metric.warn {{ background:var(--warn-soft); border-color:#f5d7aa; }}
 .metric.focus {{ background:var(--accent-soft); border-color:#ccdafb; }}
