@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-06-06T05:48:01.064925+00:00",
+  "observed_at": "2026-06-06T06:14:20.314536+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-06-06T05:48:01.433288+00:00",
+    "observed_at": "2026-06-06T06:14:20.686255+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -27,7 +27,7 @@
       "display_name": "Flyhigh harness",
       "local_path": ".",
       "local_path_resolved": "/Users/mirlim/sidejob/mybroker/flyhigh",
-      "branch": "main",
+      "branch": "flyhigh-record-briefing-inbox-apply",
       "remote_name": "origin",
       "remote_url": "git@github.com:bborok1234/flyhigh.git",
       "remote_configured": true,
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-06T05:48:01.064925+00:00",
+      "observed_at": "2026-06-06T06:14:20.314536+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-06T05:48:01.064925+00:00",
+      "observed_at": "2026-06-06T06:14:20.314536+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
@@ -70,12 +70,42 @@
     {
       "repo_id": "flyhigh-harness",
       "github_repo": "bborok1234/flyhigh",
-      "open_issue_count": 0,
-      "open_pr_count": 0,
+      "open_issue_count": 1,
+      "open_pr_count": 1,
       "issues_ok": true,
       "prs_ok": true,
-      "issues": [],
-      "prs": [],
+      "issues": [
+        {
+          "labels": [
+            {
+              "id": "LA_kwDOSp9aqM8AAAAClAgm2g",
+              "name": "flyhigh",
+              "description": "Flyhigh harness",
+              "color": "275cc8"
+            },
+            {
+              "id": "LA_kwDOSp9aqM8AAAAClAgm8Q",
+              "name": "harness",
+              "description": "Harness core",
+              "color": "5319e7"
+            }
+          ],
+          "number": 16,
+          "state": "OPEN",
+          "title": "Record target local briefing inbox apply loop",
+          "updatedAt": "2026-06-06T06:05:40Z",
+          "url": "https://github.com/bborok1234/flyhigh/issues/16"
+        }
+      ],
+      "prs": [
+        {
+          "number": 17,
+          "state": "OPEN",
+          "title": "Record target local briefing inbox apply gate",
+          "updatedAt": "2026-06-06T06:13:13Z",
+          "url": "https://github.com/bborok1234/flyhigh/pull/17"
+        }
+      ],
       "issue_error": "",
       "pr_error": ""
     },
