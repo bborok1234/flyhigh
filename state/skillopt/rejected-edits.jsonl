@@ -1,2 +1,2 @@
 {"id":"reject-sample-001","timestamp":"2026-05-27","skill":"flyhigh-qa","reason":"증거 없는 일반 문구 추가는 skill 품질을 개선하지 않는다.","evidence":["evals/suites/skillopt/basic/rubric.md"],"status":"rejected"}
-{"id": "fixture-rejected-qa-note", "timestamp": "2026-06-06T05:10:23.896146+00:00", "skill": "qa", "reason": "Candidate score regressed against baseline.", "evidence": ["skills/staging/fixture-rejected-qa-note/score.json"], "status": "rejected"}
+{"id": "fixture-rejected-qa-note", "timestamp": "2026-06-06T05:45:50.187889+00:00", "skill": "qa", "reason": "Candidate score regressed against baseline.", "evidence": ["skills/staging/fixture-rejected-qa-note/score.json"], "status": "rejected"}
