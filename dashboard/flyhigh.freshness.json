@@ -3,12 +3,12 @@
   "renderer_version": "render-dashboard.v2",
   "dashboard_path": "dashboard/flyhigh.html",
   "metadata_path": "dashboard/flyhigh.freshness.json",
-  "rendered_at": "2026-06-06T04:10:50.887140+00:00",
+  "rendered_at": "2026-06-06T04:25:12.165495+00:00",
   "fresh": true,
   "source_count": 40,
-  "source_hash": "a429c7c209c0c9c5d0a69cfa22d13b5f07ab0542128d4f91ce0bc46e0283dfb9",
-  "latest_source_mtime_ns": 1780719050663272067,
-  "latest_source_mtime": "2026-06-06T04:10:50.663272+00:00",
+  "source_hash": "846d888c91e7d7e62242b8b9dea7109f415aeae82f724c4fd137fb4d83503927",
+  "latest_source_mtime_ns": 1780719912134203904,
+  "latest_source_mtime": "2026-06-06T04:25:12.134204+00:00",
   "sources": [
     {
       "path": "evals/reports/all.json",
@@ -201,17 +201,17 @@
     },
     {
       "path": "state/issues.jsonl",
-      "sha256": "deeb157a656f22a1107fcc3976ad586f9af78b7c8aff444d9f3fd50daebdef1c",
-      "size": 73570,
-      "mtime_ns": 1780718956778502317,
-      "mtime": "2026-06-06T04:09:16.778502+00:00"
+      "sha256": "f0d3388eb4899728e1acf89de643626ee3adcb0d9c0f017fb2c2ffe091c19ee5",
+      "size": 74211,
+      "mtime_ns": 1780719911715017345,
+      "mtime": "2026-06-06T04:25:11.715017+00:00"
     },
     {
       "path": "state/iterations.jsonl",
-      "sha256": "8a48104348d76fb838668f62ce19869e2db50f9aac78c8a0cf81ae48392d042a",
-      "size": 53980,
-      "mtime_ns": 1780718956778861277,
-      "mtime": "2026-06-06T04:09:16.778861+00:00"
+      "sha256": "62c443910b4a9694d41115e3e95e3341f2a975b18d5511b6a8728cc2574c1452",
+      "size": 54678,
+      "mtime_ns": 1780719912134203904,
+      "mtime": "2026-06-06T04:25:12.134204+00:00"
     },
     {
       "path": "state/operator-decisions.jsonl",
@@ -229,10 +229,10 @@
     },
     {
       "path": "state/reviews/direction-reviews.jsonl",
-      "sha256": "01ae4e57d0e05fc32ff49b3d6855e963f1b0f86c7e63467b40c44a2c3f6edfca",
-      "size": 93395,
-      "mtime_ns": 1780718956779228029,
-      "mtime": "2026-06-06T04:09:16.779228+00:00"
+      "sha256": "7c78df5126e188cd4a6ef80ddb92e4e19cdbf16f18480f30a3151c165f105705",
+      "size": 94651,
+      "mtime_ns": 1780719911932840325,
+      "mtime": "2026-06-06T04:25:11.932840+00:00"
     },
     {
       "path": "state/skillopt/promotions.jsonl",
