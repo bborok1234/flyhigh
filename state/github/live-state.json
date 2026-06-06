@@ -1,6 +1,6 @@
 {
   "schema_version": "github_live_state.v1",
-  "observed_at": "2026-06-06T04:10:00.002701+00:00",
+  "observed_at": "2026-06-06T04:27:48.456419+00:00",
   "source": "scripts/sync-github-state",
   "remote_write_performed": false,
   "auth": {
@@ -17,7 +17,7 @@
     ],
     "checked_by": "gh auth status --json hosts",
     "remote_write_performed": false,
-    "observed_at": "2026-06-06T04:10:00.524783+00:00",
+    "observed_at": "2026-06-06T04:27:48.810188+00:00",
     "source": "live-gh-auth"
   },
   "repositories": [
@@ -27,7 +27,7 @@
       "display_name": "Flyhigh harness",
       "local_path": ".",
       "local_path_resolved": "/Users/mirlim/sidejob/mybroker/flyhigh",
-      "branch": "main",
+      "branch": "flyhigh-handoff-caveat-study-record",
       "remote_name": "origin",
       "remote_url": "git@github.com:bborok1234/flyhigh.git",
       "remote_configured": true,
@@ -39,7 +39,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-06T04:10:00.002701+00:00",
+      "observed_at": "2026-06-06T04:27:48.456419+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     },
@@ -61,7 +61,7 @@
         "git remote get-url origin",
         "gh auth status --json hosts"
       ],
-      "observed_at": "2026-06-06T04:10:00.002701+00:00",
+      "observed_at": "2026-06-06T04:27:48.456419+00:00",
       "source": "scripts/sync-github-state",
       "live_observed": true
     }
@@ -70,12 +70,48 @@
     {
       "repo_id": "flyhigh-harness",
       "github_repo": "bborok1234/flyhigh",
-      "open_issue_count": 0,
-      "open_pr_count": 0,
+      "open_issue_count": 1,
+      "open_pr_count": 1,
       "issues_ok": true,
       "prs_ok": true,
-      "issues": [],
-      "prs": [],
+      "issues": [
+        {
+          "labels": [
+            {
+              "id": "LA_kwDOSp9aqM8AAAAClAgm2g",
+              "name": "flyhigh",
+              "description": "Flyhigh harness",
+              "color": "275cc8"
+            },
+            {
+              "id": "LA_kwDOSp9aqM8AAAAClAgm6w",
+              "name": "operator-review",
+              "description": "Needs operator review",
+              "color": "fbca04"
+            },
+            {
+              "id": "LA_kwDOSp9aqM8AAAAClAgm8Q",
+              "name": "harness",
+              "description": "Harness core",
+              "color": "5319e7"
+            }
+          ],
+          "number": 10,
+          "state": "OPEN",
+          "title": "Target handoff freshness caveat study merge gate",
+          "updatedAt": "2026-06-06T04:24:44Z",
+          "url": "https://github.com/bborok1234/flyhigh/issues/10"
+        }
+      ],
+      "prs": [
+        {
+          "number": 11,
+          "state": "OPEN",
+          "title": "Record target handoff caveat study merge evidence",
+          "updatedAt": "2026-06-06T04:25:55Z",
+          "url": "https://github.com/bborok1234/flyhigh/pull/11"
+        }
+      ],
       "issue_error": "",
       "pr_error": ""
     },
