@@ -29,7 +29,7 @@
       "name": "dashboard state",
       "command": "scripts/validate-dashboard-state",
       "returncode": 0,
-      "output": "dashboard state ok (90 issues, 78 iterations, 5 github operations, 3 operator decisions)"
+      "output": "dashboard state ok (91 issues, 79 iterations, 5 github operations, 3 operator decisions)"
     },
     {
       "name": "github repositories",
@@ -41,13 +41,13 @@
       "name": "dashboard truth",
       "command": "scripts/validate-dashboard-truth",
       "returncode": 0,
-      "output": "dashboard truth ok (2 repositories, observed_at 2026-06-06T03:42:44.165396+00:00)"
+      "output": "dashboard truth ok (2 repositories, observed_at 2026-06-06T04:07:24.638844+00:00)"
     },
     {
       "name": "github ops",
       "command": "scripts/validate-github-ops",
       "returncode": 0,
-      "output": "github ops ok (5 operations, 214 sync records)"
+      "output": "github ops ok (5 operations, 217 sync records)"
     },
     {
       "name": "operator decisions",
@@ -65,13 +65,13 @@
       "name": "direction reviews",
       "command": "scripts/validate-direction-reviews",
       "returncode": 0,
-      "output": "direction reviews ok (79 reviews)"
+      "output": "direction reviews ok (80 reviews)"
     },
     {
       "name": "merge gates",
       "command": "scripts/validate-merge-gates",
       "returncode": 0,
-      "output": "merge gates ok (78 gates)"
+      "output": "merge gates ok (79 gates)"
     },
     {
       "name": "dashboard quality",
@@ -83,7 +83,7 @@
       "name": "dashboard freshness",
       "command": "scripts/validate-dashboard-freshness",
       "returncode": 0,
-      "output": "dashboard freshness ok (40 sources, hash 2854a7b4c2eb, rendered_at 2026-06-06T03:42:48.053869+00:00)"
+      "output": "dashboard freshness ok (40 sources, hash f21d5bb34f5b, rendered_at 2026-06-06T04:07:26.957396+00:00)"
     },
     {
       "name": "skillopt fixture",
@@ -119,7 +119,7 @@
       "name": "installation",
       "command": "scripts/validate-installation",
       "returncode": 0,
-      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp_wrnsffh/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp_wrnsffh/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp_wrnsffh/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmp_wrnsffh/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
+      "output": "wrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpm2mpk_j9/target-domain-app/AGENTS.md\nwrote /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpm2mpk_j9/target-domain-app/.flyhigh/bootstrap-report.md\nensured 6 memory files\n\ninstalled Flyhigh into /private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpm2mpk_j9/target-domain-app\n\n{\n  \"target\": \"/private/var/folders/9s/p3h3yhg12c58rfx8qf2_dz800000gn/T/tmpm2mpk_j9/target-domain-app\",\n  \"checks\": {\n    \"agents\": true,\n    \"memory\": true,\n    \"domain_skills\": true,\n    \"runs\": true,\n    \"dashboard_state\": true\n  },\n  \"passed\": true\n}"
     }
   ]
 }
